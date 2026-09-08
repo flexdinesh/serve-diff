@@ -54,3 +54,5 @@ pnpm check
 ```
 
 Run `pnpm build` after frontend changes, then restart `serve-diff`. No global reinstall needed.
+
+Typography lives in `apps/web/src/typography.css`: reuse its rem-based text and icon tokens and unitless line heights. SVG monogram lettering uses viewBox units so it scales with its icon.

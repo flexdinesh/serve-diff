@@ -1,5 +1,5 @@
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   color: var(--fg);
   background: var(--bg);
   font-synthesis: none;
@@ -15,7 +15,8 @@
   --green: #24844c;
   --red: #cf4b51;
   --modified: #b58a29;
-  --toolbar-height: 40px;
+  --topbar-height: 3.625rem;
+  --toolbar-height: 2.5rem;
   color-scheme: light;
 }
 :root[data-theme="dark"] {
@@ -38,7 +39,7 @@ body {
   margin: 0;
   height: 100dvh;
   overflow: hidden;
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 button,
 input {
@@ -67,17 +68,15 @@ button:where(:not(:disabled)):hover {
   background: var(--hover);
 }
 svg {
-  width: 16px;
-  height: 16px;
+  width: var(--icon-base);
+  height: var(--icon-base);
   fill: none;
   stroke: currentColor;
   stroke-width: 1.3;
   flex-shrink: 0;
 }
 kbd {
-  font:
-    10px ui-monospace,
-    monospace;
+  font: var(--text-2xs) var(--font-mono);
   border: 1px solid var(--border);
   border-radius: 3px;
   padding: 1px 4px;
@@ -94,7 +93,7 @@ kbd {
   color: var(--red);
 }
 .topbar {
-  height: 58px;
+  height: var(--topbar-height);
   display: flex;
   gap: 18px;
   align-items: center;
@@ -105,7 +104,7 @@ kbd {
   display: flex;
   align-items: center;
   gap: 9px;
-  font-size: 17px;
+  font-size: var(--text-brand);
   font-weight: 650;
   color: var(--fg);
   text-decoration: none;
@@ -115,14 +114,18 @@ kbd {
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 27px;
-  height: 27px;
+  width: 1.6875rem;
+  height: 1.6875rem;
   border-radius: 7px;
-  background: #6260df;
-  color: #fff;
-  font:
-    24px ui-monospace,
-    monospace;
+  background: #facc15;
+  color: #000;
+  font-size: var(--symbol-brand);
+}
+.brand-mark svg {
+  width: 1em;
+  height: 1em;
+  stroke-width: 2;
+  stroke-linecap: round;
 }
 .header-divider {
   width: 1px;
@@ -141,23 +144,21 @@ kbd {
 }
 .header-heading h1 {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--text-lg);
   font-weight: 600;
   white-space: nowrap;
 }
 #repo-path {
   margin: 4px 0 0;
   color: var(--muted);
-  font:
-    11px ui-monospace,
-    monospace;
+  font: var(--text-xs) var(--font-mono);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 #repo-name {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-base);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -167,9 +168,7 @@ kbd {
   gap: 7px;
   align-items: center;
   color: var(--muted);
-  font:
-    13px ui-monospace,
-    monospace;
+  font: var(--text-base) var(--font-mono);
   overflow: hidden;
   max-width: 30%;
 }
@@ -186,7 +185,7 @@ kbd {
   align-items: center;
   gap: 6px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-sm);
   white-space: nowrap;
 }
 .local-badge span,
@@ -198,10 +197,10 @@ kbd {
   display: inline-block;
 }
 .icon-button {
-  width: 30px;
-  height: 30px;
+  width: 1.875rem;
+  height: 1.875rem;
   border-radius: 6px;
-  font-size: 20px;
+  font-size: var(--icon-lg);
 }
 #sidebar-toggle {
   display: inline-flex;
@@ -210,12 +209,12 @@ kbd {
   padding: 0;
 }
 .icon-button svg {
-  width: 20px;
-  height: 20px;
+  width: 1em;
+  height: 1em;
   stroke-width: 1.7;
 }
 .workspace {
-  height: calc(100dvh - 58px);
+  height: calc(100dvh - var(--topbar-height));
   display: flex;
 }
 .sidebar {
@@ -227,9 +226,7 @@ kbd {
   border-right: 1px solid var(--border);
 }
 .count {
-  font:
-    12px ui-monospace,
-    monospace;
+  font: var(--text-sm) var(--font-mono);
   background: var(--hover);
   border: 1px solid var(--border);
   border-radius: 5px;
@@ -254,7 +251,7 @@ kbd {
   color: var(--fg);
   border: 0;
   outline: none;
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 #file-tree {
   padding: 0 9px 15px;
@@ -267,7 +264,7 @@ kbd {
   text-align: left;
   color: var(--muted);
   padding: 12px 9px 5px;
-  font-size: 11px;
+  font-size: var(--text-xs);
   white-space: pre;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -280,9 +277,7 @@ kbd {
   padding: 4px 9px;
   border-radius: 5px;
   text-align: left;
-  font:
-    13px / 18px ui-monospace,
-    monospace;
+  font: var(--text-base) / var(--leading-tree) var(--font-mono);
   white-space: pre;
 }
 .file-row[aria-current="true"] {
@@ -299,10 +294,10 @@ kbd {
 }
 .file-icon {
   color: var(--muted);
-  font-size: 14px;
+  font-size: var(--icon-md);
 }
 .file-status {
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   color: var(--modified);
 }
@@ -321,7 +316,7 @@ kbd {
   border-top: 1px solid var(--border);
 }
 .summary-label {
-  font-size: 9px;
+  font-size: var(--text-micro);
   font-weight: 650;
   letter-spacing: 1.1px;
   color: var(--muted);
@@ -331,13 +326,11 @@ kbd {
   display: flex;
   justify-content: space-between;
   margin: 11px 0;
-  font-size: 13px;
+  font-size: var(--text-base);
   color: var(--muted);
 }
 .summary-row strong {
-  font:
-    13px ui-monospace,
-    monospace;
+  font: var(--text-base) var(--font-mono);
 }
 .change-bar {
   height: 4px;
@@ -356,12 +349,12 @@ kbd {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--muted);
   margin-bottom: 16px;
 }
 .review-progress button {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--muted);
   border-radius: 3px;
   padding: 3px;
@@ -372,7 +365,7 @@ kbd {
   align-items: center;
   border-top: 1px solid var(--border);
   padding: 11px 15px;
-  font-size: 10px;
+  font-size: var(--text-2xs);
   color: var(--muted);
 }
 .read-only {
@@ -391,20 +384,20 @@ main {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   white-space: nowrap;
   box-shadow: 0 1px 2px #00000006;
 }
 .button span {
-  font-size: 18px;
-  line-height: 12px;
+  font-size: var(--icon-md);
+  line-height: calc(2 / 3);
 }
 .button .refresh-label {
   font-size: inherit;
   line-height: normal;
 }
 .topbar .button {
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 .topbar > button,
 .topbar > .brand {
@@ -433,7 +426,7 @@ main {
 .segmented button {
   padding: 5px 10px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 .segmented button[aria-pressed="true"] {
@@ -443,7 +436,7 @@ main {
 }
 .quiet-button {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--text-xs);
   padding: 6px;
   border-radius: 4px;
   white-space: nowrap;
@@ -454,7 +447,7 @@ main {
 }
 .toolbar .segmented button,
 .toolbar .quiet-button {
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .review-surface {
   flex: 1;
@@ -467,28 +460,29 @@ main {
   overflow: auto;
   overflow-anchor: none;
   contain: strict;
-  --diffs-font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --diffs-font-size: 13px;
-  --diffs-line-height: 22px;
+  --diffs-font-family: var(--font-mono);
+  --diffs-font-size: var(--text-base);
+  --diffs-line-height: calc(var(--text-base) * var(--leading-code));
 }
 diffs-container {
   border-bottom: 1px solid var(--border);
 }
 .diff-collapse {
+  font-size: var(--icon-md);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   vertical-align: middle;
-  width: 24px;
-  height: 24px;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 4px;
   color: var(--muted);
   margin-right: 5px;
 }
 .diff-collapse svg {
-  width: 18px;
-  height: 18px;
+  width: 1em;
+  height: 1em;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -500,17 +494,16 @@ diffs-container {
   border: 1px solid var(--border);
   background: var(--bg);
   border-radius: 4px;
-  font:
-    12px -apple-system,
-    sans-serif;
+  font: var(--text-sm) var(--font-sans);
   padding: 4px 8px;
 }
 .review-button[aria-pressed="true"] {
   color: var(--green);
 }
 .review-checkbox {
-  width: 14px;
-  height: 14px;
+  font-size: var(--icon-sm);
+  width: 1em;
+  height: 1em;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -518,9 +511,7 @@ diffs-container {
   display: flex;
   gap: 12px;
   align-items: center;
-  font:
-    11px ui-monospace,
-    monospace;
+  font: var(--text-xs) var(--font-mono);
 }
 #empty {
   position: absolute;
@@ -535,25 +526,23 @@ diffs-container {
 }
 .empty-symbol {
   color: var(--accent);
-  font:
-    45px ui-monospace,
-    monospace;
+  font: var(--symbol-empty) var(--font-mono);
   margin-bottom: 12px;
 }
 h2 {
-  font-size: 18px;
+  font-size: var(--text-xl);
   font-weight: 550;
   margin: 0;
 }
 #empty p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 #notice {
   padding: 10px 24px;
   background: var(--accent-bg);
   color: var(--accent);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .main-footer {
   display: flex;
@@ -562,7 +551,7 @@ h2 {
   border-top: 1px solid var(--border);
   padding: 11px 22px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--text-2xs);
 }
 .mobile-only {
   display: none;
@@ -586,7 +575,7 @@ h2 {
     padding-inline: 10px;
   }
   .brand {
-    font-size: 15px;
+    font-size: var(--text-lg);
   }
   .header-divider,
   .brand-name,
@@ -609,7 +598,7 @@ h2 {
     display: flex;
     position: absolute;
     z-index: 10;
-    top: 58px;
+    top: var(--topbar-height);
     bottom: 0;
     width: 260px;
     box-shadow: 10px 0 30px #0003;

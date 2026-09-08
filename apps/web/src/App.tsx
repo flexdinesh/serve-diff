@@ -475,7 +475,11 @@ export function App() {
           </svg>
         </button>
         <a className="brand" href="/" aria-label="serve-diff home">
-          <span className="brand-mark">±</span>
+          <span className="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v10M7 10h10M7 18h10" />
+            </svg>
+          </span>
           <span className="brand-name">serve-diff</span>
         </a>
         <span className="header-divider" />

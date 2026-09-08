@@ -6,19 +6,20 @@
   display: none;
 }
 .tree-control {
+  font-size: var(--icon-tree);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 4px;
   color: var(--muted);
   padding: 0;
 }
 .tree-control svg {
-  width: 19px;
-  height: 19px;
+  width: 1em;
+  height: 1em;
   stroke-width: 1.6;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -44,7 +45,7 @@
   flex: 1;
   padding: 0 4px;
   color: var(--muted);
-  font-size: 14px;
+  font-size: var(--text-md);
   border-bottom: 2px solid transparent;
 }
 .sidebar-tabs .tree-control {
@@ -61,7 +62,7 @@
 }
 .sidebar-tabs .count {
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 #file-panel {
   flex: 1;
@@ -93,8 +94,8 @@
   padding-block: 4px;
   padding-right: 9px;
   color: var(--fg);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--text-base);
+  line-height: var(--leading-tree);
 }
 .tree-chevron {
   width: 12px;
@@ -103,22 +104,22 @@
 }
 .folder-icon {
   color: var(--muted);
-  width: 18px;
-  height: 18px;
+  width: var(--icon-md);
+  height: var(--icon-md);
   stroke-linejoin: round;
   fill: color-mix(in srgb, currentColor 10%, transparent);
 }
 .file-row .file-icon {
   margin-left: 17px;
-  width: 18px;
-  height: 18px;
+  width: 1em;
+  height: 1em;
   flex-shrink: 0;
   position: relative;
   display: inline-flex;
 }
 .file-type-icon {
-  width: 18px;
-  height: 18px;
+  width: 1em;
+  height: 1em;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -149,6 +150,7 @@
   fill: currentColor;
   stroke: none;
 }
+/* SVG lettering stays in viewBox units so it scales with the icon. */
 .monogram-icon text {
   fill: var(--bg);
   stroke: none;
@@ -164,7 +166,7 @@
   border-radius: 50%;
   background: var(--panel);
   color: var(--green);
-  font: 700 10px sans-serif;
+  font: 700 var(--text-2xs) sans-serif;
 }
 .file-row .file-status {
   display: inline-flex;
@@ -198,7 +200,7 @@
   padding: 10px 16px;
   border-top: 1px solid var(--border);
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 .git-legend span {
   display: inline-flex;
@@ -207,9 +209,7 @@
 }
 .file-comment-count {
   color: var(--accent);
-  font:
-    10px -apple-system,
-    sans-serif;
+  font: var(--text-2xs) var(--font-sans);
   white-space: nowrap;
 }
 #sidebar-resizer {
@@ -246,7 +246,7 @@
   width: 100%;
   padding: 4px 14px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .review-tools-toggle svg {
   stroke-linecap: round;
@@ -256,14 +256,14 @@
   display: none;
 }
 .copy-comments-bar .button {
-  font-size: 13px;
+  font-size: var(--text-base);
   width: 100%;
   justify-content: center;
   background: var(--bg);
 }
 #comment-feedback {
-  font-size: 11px;
-  line-height: 1.5;
+  font-size: var(--text-xs);
+  line-height: var(--leading-copy);
   margin: 7px 0 0;
   color: var(--accent);
   overflow-wrap: anywhere;
@@ -285,14 +285,14 @@
 }
 .comment-summary {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-sm);
   margin: 2px 4px 12px;
 }
 .comment-empty {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-base);
   padding: 0 4px;
-  line-height: 1.7;
+  line-height: var(--leading-relaxed);
 }
 .comment-card,
 .comment-editor {
@@ -302,11 +302,7 @@
   border-radius: 8px;
   margin: 10px 14px;
   padding: 12px 14px;
-  font:
-    13px / 1.5 -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font: var(--text-base) / var(--leading-copy) var(--font-sans);
   min-width: 0;
   box-sizing: border-box;
 }
@@ -321,11 +317,11 @@
   gap: 8px;
   align-items: start;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .comment-state {
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--text-xs);
   padding: 1px 5px;
   background: var(--hover);
   border-radius: 4px;
@@ -334,7 +330,7 @@
   color: var(--green);
 }
 .comment-body {
-  font-size: 14px;
+  font-size: var(--text-md);
   margin: 10px 0 4px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -348,34 +344,32 @@
 }
 .comment-actions > span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--text-xs);
   margin-right: auto;
 }
 .comment-actions .quiet-button {
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .comment-actions .button {
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 .comment-location {
   text-align: left;
   color: var(--accent);
-  font:
-    12px / 1.5 ui-monospace,
-    monospace;
+  font: var(--text-sm) / var(--leading-copy) var(--font-mono);
   padding: 0;
   white-space: normal;
   overflow-wrap: anywhere;
 }
 .comment-outdated {
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--text-xs);
   margin-block: 7px;
 }
 .comment-card details {
   margin-top: 8px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 .comment-card summary {
   cursor: pointer;
@@ -387,15 +381,13 @@
   border-radius: 4px;
   background: var(--bg);
   color: var(--fg);
-  font:
-    12px / 1.5 ui-monospace,
-    monospace;
+  font: var(--text-sm) / var(--leading-copy) var(--font-mono);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 .comment-editor strong {
   display: block;
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 550;
   margin-bottom: 9px;
   overflow-wrap: anywhere;
@@ -408,9 +400,7 @@
   padding: 9px 10px;
   border: 1px solid var(--border);
   border-radius: 5px;
-  font:
-    14px / 1.6 -apple-system,
-    sans-serif;
+  font: var(--text-md) / var(--leading-editor) var(--font-sans);
   background: var(--bg);
   color: var(--fg);
   box-sizing: border-box;
@@ -448,14 +438,12 @@
 }
 .copy-dialog p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .copy-dialog textarea {
   width: 100%;
   height: 300px;
-  font:
-    12px / 1.6 ui-monospace,
-    monospace;
+  font: var(--text-sm) / var(--leading-editor) var(--font-mono);
   color: var(--fg);
   background: var(--panel);
   border: 1px solid var(--border);
