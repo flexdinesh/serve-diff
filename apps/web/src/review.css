@@ -5,42 +5,63 @@
 .sidebar.is-collapsed {
   display: none;
 }
-.sidebar-heading {
-  padding: 20px 16px 12px;
-  gap: 7px;
-}
 .tree-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
   border-radius: 4px;
   color: var(--muted);
-  font-size: 17px;
-  padding: 2px 4px;
+  padding: 0;
 }
-#tree-expand {
-  margin-left: auto;
+.tree-control svg {
+  width: 19px;
+  height: 19px;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .sidebar-tabs {
   display: flex;
+  align-items: stretch;
+  height: var(--toolbar-height);
+  flex-shrink: 0;
   border: 0;
   border-bottom: 1px solid var(--border);
-  padding: 0 12px;
+  padding: 0 8px;
   margin: 0 0 12px;
-  gap: 8px;
+  gap: 4px;
   min-width: 0;
 }
-.sidebar-tabs button {
+.sidebar-tabs button[aria-pressed] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
   flex: 1;
-  padding: 9px 4px;
+  padding: 0 4px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
   border-bottom: 2px solid transparent;
+}
+.sidebar-tabs .tree-control {
+  align-self: center;
+}
+.sidebar-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .sidebar-tabs button[aria-pressed="true"] {
   color: var(--fg);
   border-bottom-color: var(--accent);
 }
 .sidebar-tabs .count {
-  margin-left: 4px;
-  font-size: 10px;
+  flex-shrink: 0;
+  font-size: 11px;
 }
 #file-panel {
   flex: 1;
@@ -69,10 +90,11 @@
   align-items: center;
   gap: 5px;
   border-radius: 5px;
-  padding-block: 7px;
+  padding-block: 4px;
   padding-right: 9px;
   color: var(--fg);
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 18px;
 }
 .tree-chevron {
   width: 12px;
@@ -176,7 +198,7 @@
   padding: 10px 16px;
   border-top: 1px solid var(--border);
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 .git-legend span {
   display: inline-flex;
@@ -211,10 +233,30 @@
   cursor: col-resize;
 }
 .copy-comments-bar {
-  padding: 12px 14px;
+  padding: 4px 14px 8px;
+}
+.review-tools {
+  flex-shrink: 0;
   border-top: 1px solid var(--border);
 }
+.review-tools-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.review-tools-toggle svg {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#review-tools-content[hidden] {
+  display: none;
+}
 .copy-comments-bar .button {
+  font-size: 13px;
   width: 100%;
   justify-content: center;
   background: var(--bg);
@@ -243,12 +285,12 @@
 }
 .comment-summary {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   margin: 2px 4px 12px;
 }
 .comment-empty {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   padding: 0 4px;
   line-height: 1.7;
 }
@@ -261,7 +303,7 @@
   margin: 10px 14px;
   padding: 12px 14px;
   font:
-    12px / 1.5 -apple-system,
+    13px / 1.5 -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
@@ -279,11 +321,11 @@
   gap: 8px;
   align-items: start;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .comment-state {
   margin-left: auto;
-  font-size: 10px;
+  font-size: 11px;
   padding: 1px 5px;
   background: var(--hover);
   border-radius: 4px;
@@ -292,6 +334,7 @@
   color: var(--green);
 }
 .comment-body {
+  font-size: 14px;
   margin: 10px 0 4px;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -305,14 +348,20 @@
 }
 .comment-actions > span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
   margin-right: auto;
+}
+.comment-actions .quiet-button {
+  font-size: 12px;
+}
+.comment-actions .button {
+  font-size: 13px;
 }
 .comment-location {
   text-align: left;
   color: var(--accent);
   font:
-    11px / 1.5 ui-monospace,
+    12px / 1.5 ui-monospace,
     monospace;
   padding: 0;
   white-space: normal;
@@ -320,13 +369,13 @@
 }
 .comment-outdated {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
   margin-block: 7px;
 }
 .comment-card details {
   margin-top: 8px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 .comment-card summary {
   cursor: pointer;
@@ -339,14 +388,14 @@
   background: var(--bg);
   color: var(--fg);
   font:
-    11px / 1.5 ui-monospace,
+    12px / 1.5 ui-monospace,
     monospace;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 .comment-editor strong {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 550;
   margin-bottom: 9px;
   overflow-wrap: anywhere;
@@ -360,7 +409,7 @@
   border: 1px solid var(--border);
   border-radius: 5px;
   font:
-    12px / 1.6 -apple-system,
+    14px / 1.6 -apple-system,
     sans-serif;
   background: var(--bg);
   color: var(--fg);
@@ -371,9 +420,8 @@
   color: var(--bg);
   border-color: var(--accent);
 }
-.primary-button:hover {
-  opacity: 0.9;
-  background: var(--accent);
+.primary-button:not(:disabled):hover {
+  background: color-mix(in srgb, var(--accent) 90%, var(--fg));
 }
 #comments-panel .comment-card,
 #comments-panel .comment-editor {

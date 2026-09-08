@@ -1,6 +1,6 @@
 # serve-diff
 
-Review local Git changes in your browser. Built with [Pierre diffs](https://diffs.com), inspired by diffshub and [diffx](https://github.com/wong2/diffx).
+Review local Git changes in your browser. Built with React and [Pierre diffs](https://diffs.com), inspired by diffshub and [diffx](https://github.com/wong2/diffx).
 
 ## Setup
 

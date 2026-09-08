@@ -150,28 +150,7 @@ export function gitDecoration(file: ChangedFile) {
   };
 }
 
-function svgIcon(className: string) {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 20 20");
-  svg.setAttribute("class", className);
-  svg.setAttribute("aria-hidden", "true");
-  svg.setAttribute("focusable", "false");
-  return svg;
-}
-function addPath(svg: SVGSVGElement, d: string) {
-  const path = document.createElementNS(svg.namespaceURI, "path");
-  path.setAttribute("d", d);
-  svg.append(path);
-}
-
-export function folderIcon(open: boolean) {
-  const svg = svgIcon("folder-icon");
-  addPath(svg, "M2 16V5a1 1 0 0 1 1-1h4l2 2h7a1 1 0 0 1 1 1v2");
-  addPath(svg, open ? "M2 16l3-7h13l-3 7Z" : "M2 8h15v8H2Z");
-  return svg;
-}
-
-const shapes: Partial<Record<FileKind, string>> = {
+export const shapes: Partial<Record<FileKind, string>> = {
   react:
     "M3 6c2-3 16 4 14 8S1 10 3 6Zm0 8C1 10 15 3 17 6S5 17 3 14ZM10 2c4 0 4 16 0 16s-4-16 0-16Zm0 7v2",
   json: "M7 3H5v5l-2 2 2 2v5h2m6-14h2v5l2 2-2 2v5h-2",
@@ -187,57 +166,10 @@ const shapes: Partial<Record<FileKind, string>> = {
   archive: "M4 2h9l3 3v13H4Zm5 0v3h2v3H9v3h2v3H9v3",
   file: "M4 2h8l4 4v12H4Zm8 0v5h4M7 11h6m-6 3h6",
 };
-const monograms: Partial<Record<FileKind, string>> = {
+export const monograms: Partial<Record<FileKind, string>> = {
   typescript: "TS",
   javascript: "JS",
   python: "Py",
   rust: "Rs",
   go: "Go",
 };
-
-export function fileIcon(path: string, reviewed: boolean) {
-  const kind = fileKind(path);
-  const wrapper = document.createElement("span");
-  wrapper.className = "file-icon";
-  wrapper.dataset.kind = kind;
-  wrapper.setAttribute("aria-hidden", "true");
-  const svg = svgIcon("file-type-icon");
-  const monogram = monograms[kind];
-  if (monogram) {
-    addPath(svg, "M2 2h16v16H2Z");
-    svg.classList.add("monogram-icon");
-    const text = document.createElementNS(svg.namespaceURI, "text");
-    text.setAttribute("x", "10");
-    text.setAttribute("y", "13.5");
-    text.textContent = monogram;
-    svg.append(text);
-  } else addPath(svg, shapes[kind] ?? shapes.file ?? "");
-  wrapper.append(svg);
-  if (reviewed) {
-    const check = document.createElement("span");
-    check.className = "file-reviewed-check";
-    check.textContent = "✓";
-    wrapper.append(check);
-  }
-  return wrapper;
-}
-
-export function statusBadge(file: ChangedFile) {
-  const decoration = gitDecoration(file);
-  const badge = document.createElement("span");
-  badge.className = "file-status";
-  badge.dataset.status = file.status;
-  badge.dataset.state = decoration.state;
-  badge.title = decoration.details;
-  badge.setAttribute("aria-label", decoration.label);
-  const code = document.createElement("span");
-  code.textContent = decoration.code;
-  badge.append(code);
-  if (["staged", "unstaged", "both"].includes(decoration.state)) {
-    const dot = document.createElement("span");
-    dot.className = `staging-dot ${decoration.state}`;
-    dot.setAttribute("aria-hidden", "true");
-    badge.append(dot);
-  }
-  return badge;
-}
