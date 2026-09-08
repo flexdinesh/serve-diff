@@ -1,0 +1,11 @@
+{
+  "name": "@serve-diff/server",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@pierre/diffs": "catalog:",
+    "@serve-diff/shared": "workspace:*",
+    "vite": "catalog:"
+  },
+  "license": "apache-2.0"
+}

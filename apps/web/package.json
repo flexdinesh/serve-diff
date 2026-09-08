@@ -1,0 +1,16 @@
+{
+  "name": "@serve-diff/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@pierre/diffs": "catalog:",
+    "@serve-diff/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "catalog:"
+  },
+  "license": "apache-2.0"
+}

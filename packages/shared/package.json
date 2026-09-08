@@ -1,0 +1,7 @@
+{
+  "name": "@serve-diff/shared",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "license": "apache-2.0"
+}

@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>serve-diff · Local changes</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  </head>
+  <body>
+    <header class="topbar">
+      <button
+        type="button"
+        id="sidebar-toggle"
+        class="icon-button"
+        aria-label="Toggle file sidebar"
+        aria-controls="sidebar"
+        aria-expanded="true"
+      >
+        ☰
+      </button>
+      <a class="brand" href="/" aria-label="serve-diff home"
+        ><span class="brand-mark">±</span>
+        serve-diff</a
+      >
+      <span class="header-divider"></span>
+      <span id="repo-name">Local repository</span>
+      <span class="branch-badge"
+        ><svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M4 4v7m8-7v2a3 3 0 0 1-3 3H7" />
+          <circle cx="4" cy="3" r="2" />
+          <circle cx="4" cy="13" r="2" />
+          <circle cx="12" cy="3" r="2" />
+        </svg><span id="branch">—</span></span
+      >
+      <div class="header-spacer"></div>
+      <span class="local-badge"><span></span> Local only</span>
+      <button
+        type="button"
+        id="theme"
+        class="icon-button"
+        aria-label="Switch to dark theme"
+        title="Switch theme"
+      >
+        ◐
+      </button>
+    </header>
+    <div class="workspace">
+      <aside id="sidebar" class="sidebar" aria-label="Changed files">
+        <div class="sidebar-heading">
+          <span>Files changed</span><span id="file-count" class="count">0</span>
+          <button
+            type="button"
+            id="tree-expand"
+            class="tree-control"
+            aria-label="Expand all folders"
+            title="Expand all folders"
+          >
+            ⊞
+          </button>
+          <button
+            type="button"
+            id="tree-collapse"
+            class="tree-control"
+            aria-label="Collapse all folders"
+            title="Collapse all folders"
+          >
+            ⊟
+          </button>
+        </div>
+        <fieldset class="sidebar-tabs" aria-label="Sidebar view">
+          <button type="button" id="files-tab" aria-pressed="true">
+            Files
+          </button>
+          <button type="button" id="comments-tab" aria-pressed="false">
+            Comments <span id="comment-count" class="count">0</span>
+          </button>
+        </fieldset>
+        <div id="file-panel">
+          <div class="search-box">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.5" />
+              <path d="m10.5 10.5 3 3" />
+            </svg><input
+              id="search"
+              type="search"
+              placeholder="Filter files…"
+              aria-label="Filter files"
+            ><kbd>/</kbd>
+          </div>
+          <nav id="file-tree" aria-label="Changed file navigation"></nav>
+          <div
+            id="git-legend"
+            class="git-legend"
+            title="Git staging indicators"
+          >
+            <span
+              ><i class="staging-dot staged" aria-hidden="true"></i>Staged</span
+            >
+            <span><i class="staging-dot both" aria-hidden="true"></i>Both</span>
+            <span
+              ><i class="staging-dot unstaged" aria-hidden="true"></i
+              >Unstaged</span
+            >
+            <span title="Untracked file">U Untracked</span>
+          </div>
+        </div>
+        <section
+          id="comments-panel"
+          aria-label="Review comments"
+          hidden
+        ></section>
+        <div class="copy-comments-bar">
+          <button type="button" id="copy-comments" class="button" disabled>
+            Copy comments
+          </button>
+          <p id="comment-feedback" role="status" aria-live="polite"></p>
+        </div>
+        <div class="sidebar-bottom">
+          <div class="summary-label">CHANGE SUMMARY</div>
+          <div class="summary-row">
+            <span>Files changed</span><strong id="summary-files">0</strong>
+          </div>
+          <div class="summary-row">
+            <span>Additions</span
+            ><strong id="additions" class="positive">+0</strong>
+          </div>
+          <div class="summary-row">
+            <span>Deletions</span
+            ><strong id="deletions" class="negative">−0</strong>
+          </div>
+          <div id="change-bar" class="change-bar"><span></span></div>
+          <div class="review-progress">
+            <span id="review-count">0 of 0 reviewed</span
+            ><button
+              type="button"
+              id="reset-reviewed"
+              title="Clear reviewed files"
+            >
+              Reset
+            </button>
+          </div>
+          <div class="sidebar-footer">
+            <span class="live-dot"></span
+            ><span id="connection">Connecting…</span
+            ><span class="read-only">Read-only</span>
+          </div>
+        </div>
+      </aside>
+      <hr
+        id="sidebar-resizer"
+        aria-label="Resize file sidebar"
+        aria-orientation="vertical"
+        aria-valuemin="200"
+        aria-valuemax="520"
+        aria-valuenow="280"
+        tabindex="0"
+      >
+      <main>
+        <section class="page-heading">
+          <div>
+            <div id="source-label" class="eyebrow">WORKING TREE</div>
+            <h1 id="changes-title">Local changes</h1>
+            <p id="repo-path">Reading your repository…</p>
+          </div>
+          <button
+            type="button"
+            id="refresh"
+            class="button"
+            title="Refresh changes (R)"
+          >
+            <span aria-hidden="true">↻</span>
+            Refresh
+          </button>
+        </section>
+        <div class="toolbar">
+          <fieldset
+            id="diff-scope"
+            class="segmented modes"
+            aria-label="Diff scope"
+          >
+            <button type="button" data-mode="all" aria-pressed="true">
+              All changes
+            </button><button
+              type="button"
+              data-mode="staged"
+              aria-pressed="false"
+            >
+              Staged
+            </button><button
+              type="button"
+              data-mode="unstaged"
+              aria-pressed="false"
+            >
+              Unstaged
+            </button>
+          </fieldset>
+          <div class="toolbar-spacer"></div>
+          <button
+            type="button"
+            id="collapse-all"
+            class="quiet-button"
+            title="Collapse or expand all files"
+          >
+            Collapse all
+          </button>
+          <button
+            type="button"
+            id="wrap"
+            class="quiet-button"
+            aria-pressed="false"
+            title="Wrap long lines"
+          >
+            Wrap
+          </button>
+          <fieldset class="segmented" aria-label="Diff layout">
+            <button type="button" data-layout="split" aria-pressed="true">
+              Split
+            </button><button
+              type="button"
+              data-layout="unified"
+              aria-pressed="false"
+            >
+              Unified
+            </button>
+          </fieldset>
+        </div>
+        <div id="notice" role="status" hidden></div>
+        <div class="review-surface">
+          <section id="viewer" aria-label="Code differences"></section>
+          <div id="empty" role="status">
+            <div class="empty-symbol">±</div>
+            <h2>Loading changes</h2>
+            <p>Your working tree, in focus.</p>
+          </div>
+        </div>
+        <footer class="main-footer">
+          <span id="scope-description"
+            >HEAD → working tree, including untracked files</span
+          ><span
+            ><kbd>J</kbd> <kbd>K</kbd> files <kbd>/</kbd> filter
+            <kbd>R</kbd>
+            refresh</span
+          >
+        </footer>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

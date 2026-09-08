@@ -1,0 +1,56 @@
+# serve-diff
+
+Review local Git changes in your browser. Built with [Pierre diffs](https://diffs.com), inspired by diffshub and [diffx](https://github.com/wong2/diffx).
+
+## Setup
+
+Requires **Node 26**, **pnpm 11**, and **Git**. From this checkout:
+
+```sh
+pnpm install
+pnpm build
+pnpm add -g .
+```
+
+This registers `serve-diff` globally, pointing to this checkout. Keep the checkout in place. If pnpm reports a missing global bin directory, run `pnpm setup`, restart your terminal, and retry.
+
+## Usage
+
+From any Git repository:
+
+```sh
+serve-diff .
+```
+
+Open **http://127.0.0.1:3333**. Stop with **Ctrl+C**.
+
+```sh
+serve-diff .                  # current repository
+serve-diff /path/to/repo      # another repository
+serve-diff . --port 4000      # different port
+```
+
+Subdirectories resolve to the repository root. Switch between all, staged, and unstaged changes; edits refresh automatically. Use the file tree to navigate, **+** beside a line to comment, and **Copy comments** to export your review. Comments stay in your browser. The viewer never changes your Git files or index.
+
+Or pipe Git output directly:
+
+```sh
+git diff | serve-diff
+git show | serve-diff
+git show main..HEAD~1 | serve-diff
+git diff main HEAD~1 | serve-diff
+serve-diff - < saved.patch
+```
+
+Piped or redirected input takes priority over a directory argument; an empty pipe opens an empty diff. Without input redirection, a directory is required. Piped diffs are fixed snapshots; re-run the command to update. Commit ranges show each commit separately, including repeated files. `git diff` between two refs shows their net difference. Standard Git patches up to 16 MiB total / 2 MiB per file are supported; use `git show --diff-merges=separate` for merge commits.
+
+## Development
+
+From this checkout:
+
+```sh
+pnpm dev /path/to/repo
+pnpm check
+```
+
+Run `pnpm build` after frontend changes, then restart `serve-diff`. No global reinstall needed.

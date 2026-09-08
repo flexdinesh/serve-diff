@@ -1,0 +1,13 @@
+packages:
+  - apps/*
+  - packages/*
+
+catalog:
+  '@pierre/diffs': 1.4.1
+  '@types/node': 26.4.1
+  '@biomejs/biome': 2.5.12
+  typescript: 7.0.2
+  vite: 8.2.2
+
+allowBuilds:
+  esbuild: true
