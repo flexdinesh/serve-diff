@@ -3,7 +3,11 @@ import type {
   FileDiffMetadata,
   SelectedLineRange,
 } from "@pierre/diffs";
-import { type DiffMode, isDiffMode } from "@serve-diff/shared";
+import {
+  type DiffMode,
+  isDiffMode,
+  type RepositoryDiff,
+} from "@serve-diff/shared";
 
 export interface ReviewComment {
   id: string;
@@ -157,4 +161,17 @@ export function formatComments(comments: readonly ReviewComment[]): string {
   }
   lines.push("</code-review-comments>");
   return lines.join("\n");
+}
+
+export function anchored(
+  comment: ReviewComment,
+  repository: RepositoryDiff | null,
+) {
+  return (
+    comment.scope === repository?.mode &&
+    repository.files.some(
+      (file) =>
+        file.path === comment.path && file.fingerprint === comment.fingerprint,
+    )
+  );
 }

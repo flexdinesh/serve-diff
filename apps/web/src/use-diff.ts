@@ -160,6 +160,7 @@ export function useDiff(mode: DiffMode, composing: boolean) {
         let next = 0;
         let failed = 0;
         let loadedBytes = 0;
+        const repositoryRoot = data.root;
         async function loadNext() {
           while (next < pending.length && !signal.aborted) {
             const file = pending[next++];
@@ -207,6 +208,13 @@ export function useDiff(mode: DiffMode, composing: boolean) {
                         ).flatMap((patch) => patch.files)[0]
                       : undefined;
                 if (parsed && parsed.hunks.length > 0) {
+                  // Reuse worker highlighting across navigation and scope reloads.
+                  parsed.cacheKey = JSON.stringify([
+                    repositoryRoot,
+                    mode,
+                    file.path,
+                    file.fingerprint,
+                  ]);
                   parsed.name = file.path;
                   if (file.oldPath) parsed.prevName = file.oldPath;
                   file.additions = parsed.hunks.reduce(
