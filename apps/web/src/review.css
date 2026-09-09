@@ -255,9 +255,13 @@
 #review-tools-content[hidden] {
   display: none;
 }
-.copy-comments-bar .button {
+.copy-comments-actions {
+  display: flex;
+  gap: 6px;
+}
+.copy-comments-actions .button {
+  flex: 1;
   font-size: var(--text-base);
-  width: 100%;
   justify-content: center;
   background: var(--bg);
 }

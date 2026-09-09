@@ -21,6 +21,19 @@ export interface ReviewComment {
   body: string;
   status: "open" | "resolved";
   createdAt: number;
+  origin?: ReviewOrigin;
+}
+
+export interface ReviewOrigin {
+  source: "local" | "stdin";
+  repository: string;
+  branch: string;
+  head: string | null;
+  revision: string;
+  file: {
+    status: string;
+    oldPath: string | null;
+  };
 }
 
 export type CommentAnnotation =
@@ -92,6 +105,18 @@ export function commentContext(
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
+function validOrigin(value: unknown): value is ReviewOrigin {
+  if (!record(value) || !record(value.file)) return false;
+  return (
+    (value.source === "local" || value.source === "stdin") &&
+    typeof value.repository === "string" &&
+    typeof value.branch === "string" &&
+    (value.head === null || typeof value.head === "string") &&
+    typeof value.revision === "string" &&
+    typeof value.file.status === "string" &&
+    (value.file.oldPath === null || typeof value.file.oldPath === "string")
+  );
+}
 function validComment(value: unknown): value is ReviewComment {
   return (
     record(value) &&
@@ -112,7 +137,8 @@ function validComment(value: unknown): value is ReviewComment {
     value.body.trim().length > 0 &&
     (value.status === "open" || value.status === "resolved") &&
     typeof value.createdAt === "number" &&
-    Number.isFinite(value.createdAt)
+    Number.isFinite(value.createdAt) &&
+    (value.origin === undefined || validOrigin(value.origin))
   );
 }
 export function parseComments(raw: string | null): ReviewComment[] {
@@ -133,31 +159,122 @@ function xml(value: string) {
     .replaceAll("'", "&apos;");
 }
 
-// Preserve the captured code, side, scope, and range when handing feedback to an agent.
-export function formatComments(comments: readonly ReviewComment[]): string {
-  if (comments.length === 0) return "";
-  const grouped = new Map<string, ReviewComment[]>();
-  for (const comment of comments) {
-    const group = grouped.get(comment.path) ?? [];
-    group.push(comment);
-    grouped.set(comment.path, group);
+function attribute(value: string) {
+  return xml(value)
+    .replaceAll("\n", "&#10;")
+    .replaceAll("\r", "&#13;")
+    .replaceAll("\t", "&#9;");
+}
+
+function changeName(status: string) {
+  switch (status) {
+    case "A":
+      return "added";
+    case "M":
+      return "modified";
+    case "D":
+      return "deleted";
+    case "R":
+      return "renamed";
+    case "C":
+      return "copied";
+    case "T":
+      return "type-changed";
+    case "U":
+      return "conflicted";
+    case "?":
+      return "untracked";
+    default:
+      return status;
   }
-  const lines = ["<code-review-comments>"];
-  for (const [path, group] of grouped) {
-    const escapedPath = xml(path)
-      .replaceAll("\n", "&#10;")
-      .replaceAll("\r", "&#13;")
-      .replaceAll("\t", "&#9;");
-    lines.push(`  <file path="${escapedPath}">`);
-    for (const comment of group) {
+}
+
+interface ExportComment {
+  id: string;
+  comment: ReviewComment;
+}
+
+interface ExportReview {
+  origin: ReviewOrigin | undefined;
+  files: Map<string, ExportComment[]>;
+}
+
+function snapshotKey(origin: ReviewOrigin | undefined) {
+  return origin
+    ? JSON.stringify([
+        origin.source,
+        origin.repository,
+        origin.branch,
+        origin.head,
+        origin.revision,
+      ])
+    : "unknown";
+}
+
+// Preserve captured context and provenance when handing feedback to an agent.
+export function formatComments(
+  comments: readonly ReviewComment[],
+  includeResolved: boolean,
+): string {
+  const selected = includeResolved
+    ? comments
+    : comments.filter((comment) => comment.status === "open");
+  if (selected.length === 0) return "";
+  const reviews = new Map<string, ExportReview>();
+  for (const [index, comment] of selected.entries()) {
+    const key = snapshotKey(comment.origin);
+    const review = reviews.get(key) ?? {
+      origin: comment.origin,
+      files: new Map<string, ExportComment[]>(),
+    };
+    const file = review.files.get(comment.path) ?? [];
+    file.push({ id: `C${index + 1}`, comment });
+    review.files.set(comment.path, file);
+    reviews.set(key, review);
+  }
+  const instruction = [
+    "Address every unresolved review comment.",
+    "Inspect the current working tree before editing because code and line numbers describe the reviewed snapshot.",
+    "Preserve unrelated changes.",
+    "If a comment is stale or cannot be applied, report it using its comment ID.",
+    ...(includeResolved
+      ? ["Resolved comments are context only; do not act on them."]
+      : []),
+  ].join(" ");
+  const lines = [
+    '<code-review-comments version="2">',
+    `  <instructions>${xml(instruction)}</instructions>`,
+  ];
+  for (const review of reviews.values()) {
+    const origin = review.origin;
+    if (origin) {
+      const head = origin.head ? ` head="${attribute(origin.head)}"` : "";
       lines.push(
-        `    <comment line="${comment.start}" end-line="${comment.end}" side="${comment.side}" scope="${comment.scope}" status="${comment.status}">`,
-        `      <code>${xml(comment.code)}</code>`,
-        `      <body>${xml(comment.body)}</body>`,
-        "    </comment>",
+        `  <review source="${origin.source}" repository="${attribute(origin.repository)}" branch="${attribute(origin.branch)}"${head} revision="${attribute(origin.revision)}">`,
       );
+    } else {
+      lines.push('  <review origin="unknown">');
     }
-    lines.push("  </file>");
+    for (const [path, commentsForFile] of review.files) {
+      const fileOrigin = commentsForFile[0]?.comment.origin?.file;
+      const oldPath = fileOrigin?.oldPath
+        ? ` old-path="${attribute(fileOrigin.oldPath)}"`
+        : "";
+      const change = fileOrigin
+        ? ` change="${attribute(changeName(fileOrigin.status))}"`
+        : "";
+      lines.push(`    <file path="${attribute(path)}"${oldPath}${change}>`);
+      for (const { id, comment } of commentsForFile) {
+        lines.push(
+          `      <comment id="${id}" line="${comment.start}" end-line="${comment.end}" side="${comment.side}" scope="${comment.scope}" status="${comment.status}">`,
+          `        <code>${xml(comment.code)}</code>`,
+          `        <body>${xml(comment.body)}</body>`,
+          "      </comment>",
+        );
+      }
+      lines.push("    </file>");
+    }
+    lines.push("  </review>");
   }
   lines.push("</code-review-comments>");
   return lines.join("\n");
