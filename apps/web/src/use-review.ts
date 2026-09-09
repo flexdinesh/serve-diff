@@ -74,6 +74,14 @@ export function useReview(
       body: "",
       status: "open",
       createdAt: Date.now(),
+      origin: {
+        source: repository.source === "stdin" ? "stdin" : "local",
+        repository: repository.name,
+        branch: repository.branch,
+        head: repository.head,
+        revision: repository.revision,
+        file: { status: file.status, oldPath: file.oldPath },
+      },
     });
     setFeedback("Draft open — automatic refresh paused.");
   }
@@ -114,13 +122,16 @@ export function useReview(
     if (draft?.id === comment.id) setDraft(null);
     commit(comments.filter((entry) => entry.id !== comment.id));
   }
-  async function copy() {
-    const output = formatComments(comments);
+  async function copy(includeResolved: boolean) {
+    const copied = includeResolved
+      ? comments
+      : comments.filter((comment) => comment.status === "open");
+    const output = formatComments(copied, includeResolved);
     if (!output) return;
     try {
       await navigator.clipboard.writeText(output);
       setFeedback(
-        `Copied ${comments.length} ${comments.length === 1 ? "comment" : "comments"} as XML.`,
+        `Copied ${copied.length} ${copied.length === 1 ? "comment" : "comments"} as XML.`,
       );
     } catch {
       setCopyText(output);

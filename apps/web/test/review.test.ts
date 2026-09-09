@@ -10,6 +10,7 @@ import {
   lineContext,
   parseComments,
   type ReviewComment,
+  type ReviewOrigin,
 } from "../src/review-model.ts";
 
 function file(path: string): ChangedFile {
@@ -94,14 +95,14 @@ const comment: ReviewComment = {
   id: "one",
   path: "src/file.ts",
   scope: "staged",
-  fingerprint: "version",
+  fingerprint: "private-fingerprint",
   side: "deletions",
   start: 101,
   end: 101,
   code: "- old value",
   body: "Keep this behavior.",
   status: "open",
-  createdAt: 1,
+  createdAt: 9_876_543_210,
 };
 
 test("builds actual nested folders, ordered before files, without merging similar prefixes", () => {
@@ -181,36 +182,165 @@ test("captures normalized ranges and never mixes line numbering across sides", (
   );
 });
 
-test("copies grouped comments with ranges, scope, status, and XML-safe code and bodies", () => {
-  const output = formatComments([
-    comment,
-    {
-      ...comment,
-      id: "two",
-      side: "additions",
-      start: 101,
-      end: 102,
-      code: "+ if (a < b && b > 1)",
-      body: '</body><evil attr="x"> & more',
-      status: "resolved",
-    },
-    { ...comment, id: "three", path: 'weird"&<file>.ts' },
-  ]);
-  assert.equal(output.split('<file path="src/file.ts">').length, 2);
-  assert.match(
-    output,
-    /line="101" end-line="102" side="additions" scope="staged" status="resolved"/,
+test("copies unresolved comments by default and all comments when requested", () => {
+  const resolved: ReviewComment = {
+    ...comment,
+    id: "two",
+    status: "resolved",
+  };
+  const unresolvedOutput = formatComments([resolved, comment], false);
+  assert.ok(!unresolvedOutput.includes('status="resolved"'));
+  assert.ok(unresolvedOutput.includes('id="C1"'));
+  assert.ok(!unresolvedOutput.includes("Resolved comments are context only"));
+
+  const allOutput = formatComments([resolved, comment], true);
+  assert.ok(allOutput.includes('id="C1"'));
+  assert.ok(allOutput.includes('id="C2"'));
+  assert.ok(allOutput.includes('status="resolved"'));
+  assert.ok(allOutput.includes("Resolved comments are context only"));
+});
+
+test("groups comments by snapshot then file while preserving export order", () => {
+  const firstOrigin: ReviewOrigin = {
+    source: "local",
+    repository: "serve-diff",
+    branch: "main",
+    head: "abc123",
+    revision: "revision-1",
+    file: { status: "M", oldPath: null },
+  };
+  const secondOrigin: ReviewOrigin = {
+    ...firstOrigin,
+    source: "stdin",
+    head: null,
+    revision: "revision-2",
+  };
+  const output = formatComments(
+    [
+      { ...comment, origin: firstOrigin },
+      { ...comment, id: "two", path: "src/other.ts", origin: firstOrigin },
+      { ...comment, id: "three", origin: secondOrigin },
+      { ...comment, id: "legacy" },
+    ],
+    true,
   );
+  assert.equal(output.match(/<review /g)?.length, 3);
+  assert.equal(output.match(/repository="serve-diff"/g)?.length, 2);
+  assert.equal(output.match(/<file path="src\/file.ts"/g)?.length, 3);
+  assert.ok(output.includes('source="local"'));
+  assert.ok(output.includes('source="stdin"'));
+  assert.ok(output.includes('head="abc123"'));
+  assert.ok(
+    output.includes(
+      '<review source="stdin" repository="serve-diff" branch="main" revision="revision-2">',
+    ),
+  );
+  assert.ok(output.includes('<review origin="unknown">'));
+  assert.ok(output.indexOf('id="C1"') < output.indexOf('id="C4"'));
+});
+
+test("copies rename and status metadata with XML-safe attributes and content", () => {
+  const output = formatComments(
+    [
+      {
+        ...comment,
+        path: 'new\n"&<file>.ts',
+        code: "+ if (a < b && b > 1)",
+        body: '</body><evil attr="x"> & more',
+        origin: {
+          source: "local",
+          repository: 'repo\n"&<name>',
+          branch: 'branch\t"&<name>',
+          head: 'head\r"&<id>',
+          revision: 'revision\n"&<id>',
+          file: { status: 'X\n"&<status>', oldPath: 'old\n"&<file>.ts' },
+        },
+      },
+      {
+        ...comment,
+        id: "renamed",
+        path: "renamed.ts",
+        origin: {
+          source: "local",
+          repository: "repo",
+          branch: "main",
+          head: "abc",
+          revision: "rename-revision",
+          file: { status: "R", oldPath: "old.ts" },
+        },
+      },
+    ],
+    true,
+  );
+  assert.ok(output.includes('change="X&#10;&quot;&amp;&lt;status&gt;"'));
+  assert.ok(output.includes('old-path="old.ts" change="renamed"'));
+  assert.ok(output.includes('repository="repo&#10;&quot;&amp;&lt;name&gt;"'));
+  assert.ok(output.includes('branch="branch&#9;&quot;&amp;&lt;name&gt;"'));
+  assert.ok(output.includes('head="head&#13;&quot;&amp;&lt;id&gt;"'));
+  assert.ok(output.includes('revision="revision&#10;&quot;&amp;&lt;id&gt;"'));
+  assert.ok(output.includes('path="new&#10;&quot;&amp;&lt;file&gt;.ts"'));
+  assert.ok(output.includes('old-path="old&#10;&quot;&amp;&lt;file&gt;.ts"'));
+  assert.ok(output.includes("+ if (a &lt; b &amp;&amp; b &gt; 1)"));
   assert.ok(
     output.includes("&lt;/body&gt;&lt;evil attr=&quot;x&quot;&gt; &amp; more"),
   );
-  assert.ok(output.includes("+ if (a &lt; b &amp;&amp; b &gt; 1)"));
-  assert.ok(output.includes('path="weird&quot;&amp;&lt;file&gt;.ts"'));
-  assert.equal(formatComments([]), "");
+});
+
+test("maps supported file statuses and omits private implementation metadata", () => {
+  const statuses = ["A", "M", "D", "R", "C", "T", "U", "?"];
+  const output = formatComments(
+    statuses.map((status, index) => ({
+      ...comment,
+      id: `${index}`,
+      path: `${index}.ts`,
+      origin: {
+        source: "local",
+        repository: "repo",
+        branch: "main",
+        head: "abc",
+        revision: "revision",
+        file: { status, oldPath: null },
+      },
+    })),
+    true,
+  );
+  for (const change of [
+    "added",
+    "modified",
+    "deleted",
+    "renamed",
+    "copied",
+    "type-changed",
+    "conflicted",
+    "untracked",
+  ]) {
+    assert.ok(output.includes(`change="${change}"`));
+  }
+  assert.ok(!output.includes(comment.fingerprint));
+  assert.ok(!output.includes(`${comment.createdAt}`));
+  assert.ok(!output.includes("indexStatus"));
+  assert.ok(!output.includes("worktreeStatus"));
+});
+
+test("returns empty output when no comments are selected", () => {
+  assert.equal(formatComments([], false), "");
+  assert.equal(formatComments([{ ...comment, status: "resolved" }], false), "");
 });
 
 test("reloads saved comments and rejects malformed storage without losing valid entries", () => {
   assert.deepEqual(parseComments(JSON.stringify([comment])), [comment]);
+  const withOrigin: ReviewComment = {
+    ...comment,
+    origin: {
+      source: "local",
+      repository: "serve-diff",
+      branch: "main",
+      head: null,
+      revision: "revision",
+      file: { status: "R", oldPath: "src/old.ts" },
+    },
+  };
+  assert.deepEqual(parseComments(JSON.stringify([withOrigin])), [withOrigin]);
   assert.deepEqual(parseComments("broken"), []);
   assert.deepEqual(
     parseComments(
@@ -219,6 +349,11 @@ test("reloads saved comments and rejects malformed storage without losing valid 
         { ...comment, side: "wrong" },
         { ...comment, start: -1 },
         { ...comment, body: " " },
+        { ...comment, origin: { ...withOrigin.origin, source: "remote" } },
+        {
+          ...comment,
+          origin: { ...withOrigin.origin, file: { status: 1, oldPath: null } },
+        },
       ]),
     ),
     [comment],

@@ -1,28 +1,30 @@
 {
   "name": "serve-diff-workspace",
   "private": true,
-  "type": "module",
+  "license": "apache-2.0",
   "bin": {
     "serve-diff": "./apps/server/src/cli.ts"
   },
-  "packageManager": "pnpm@11.25.0",
-  "engines": {
-    "node": ">=26 <27"
-  },
+  "type": "module",
   "scripts": {
     "build": "pnpm --filter @serve-diff/web build",
     "start": "node apps/server/src/cli.ts",
     "dev": "node apps/server/src/cli.ts --dev",
     "typecheck": "tsc --noEmit",
     "test": "node --test apps/server/test/*.test.ts apps/web/test/*.test.ts",
-    "format": "biome format --write .",
-    "lint": "biome check .",
-    "check": "pnpm typecheck && pnpm lint && pnpm build && pnpm test"
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "lint": "oxlint .",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm build && pnpm test"
   },
   "devDependencies": {
-    "@biomejs/biome": "catalog:",
     "@types/node": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
     "typescript": "catalog:"
   },
-  "license": "apache-2.0"
+  "engines": {
+    "node": ">=26 <27"
+  },
+  "packageManager": "pnpm@11.25.0"
 }

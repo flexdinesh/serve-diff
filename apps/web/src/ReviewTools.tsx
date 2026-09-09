@@ -17,6 +17,9 @@ export function ReviewTools() {
   const allFiles = repository?.files ?? [];
   const additions = allFiles.reduce((sum, file) => sum + file.additions, 0);
   const deletions = allFiles.reduce((sum, file) => sum + file.deletions, 0);
+  const unresolved = review.comments.filter(
+    (comment) => comment.status === "open",
+  ).length;
   return (
     <section className="review-tools" aria-label="Review tools">
       <button
@@ -34,17 +37,30 @@ export function ReviewTools() {
       </button>
       <div id="review-tools-content" hidden={toolsCollapsed}>
         <div className="copy-comments-bar">
-          <button
-            type="button"
-            id="copy-comments"
-            className="button"
-            disabled={!review.comments.length}
-            onClick={() => {
-              void review.copy();
-            }}
-          >
-            Copy comments
-          </button>
+          <div className="copy-comments-actions">
+            <button
+              type="button"
+              id="copy-unresolved"
+              className="button"
+              disabled={!unresolved}
+              onClick={() => {
+                void review.copy(false);
+              }}
+            >
+              Copy unresolved
+            </button>
+            <button
+              type="button"
+              id="copy-all"
+              className="button"
+              disabled={!review.comments.length}
+              onClick={() => {
+                void review.copy(true);
+              }}
+            >
+              Copy all
+            </button>
+          </div>
           <p id="comment-feedback" role="status" aria-live="polite">
             {review.feedback}
           </p>

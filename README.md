@@ -30,7 +30,7 @@ serve-diff /path/to/repo      # another repository
 serve-diff . --port 4000      # different port
 ```
 
-Subdirectories resolve to the repository root. Switch between all, staged, and unstaged changes; edits refresh automatically. Use the file tree to navigate, **+** beside a line to comment, and **Copy comments** to export your review. Comments stay in your browser. The viewer never changes your Git files or index.
+Subdirectories resolve to the repository root. Switch between all, staged, and unstaged changes; edits refresh automatically. Use the file tree to navigate and **+** beside a line to comment. **Copy unresolved** or **Copy all** exports agent-ready XML with instructions, short comment IDs, captured code context, and review provenance. Comments stay in your browser. The viewer never changes your Git files or index.
 
 Or pipe Git output directly:
 
