@@ -10,6 +10,7 @@ import {
 import { save, saved } from "./preferences.ts";
 import {
   commentContext,
+  createCommentId,
   formatComments,
   parseComments,
   type ReviewComment,
@@ -66,7 +67,7 @@ export function useReview(
       return;
     }
     setDraft({
-      id: crypto.randomUUID(),
+      id: createCommentId(),
       path: file.path,
       scope: repository.mode,
       fingerprint: file.fingerprint,

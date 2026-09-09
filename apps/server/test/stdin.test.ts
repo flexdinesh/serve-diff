@@ -195,7 +195,7 @@ for (const input of [patch, ""]) {
       });
       child.stdout.on("data", (chunk) => {
         output += String(chunk);
-        const url = /http:\/\/127\.0\.0\.1:\d+/.exec(output)?.[0];
+        const url = /http:\/\/localhost:\d+/.exec(output)?.[0];
         if (url) {
           clearTimeout(timeout);
           resolve(url);

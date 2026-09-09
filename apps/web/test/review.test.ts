@@ -6,6 +6,7 @@ import { fileKind, gitDecoration } from "../src/file-decoration.ts";
 import { ancestorPaths, buildFileTree } from "../src/file-tree.ts";
 import {
   commentContext,
+  createCommentId,
   formatComments,
   lineContext,
   parseComments,
@@ -105,6 +106,15 @@ const comment: ReviewComment = {
   createdAt: 9_876_543_210,
 };
 
+test("creates comment IDs without randomUUID", () => {
+  assert.equal(
+    createCommentId(
+      new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 255]),
+    ),
+    "000102030405060708090a0b0c0d0eff",
+  );
+});
+
 test("builds actual nested folders, ordered before files, without merging similar prefixes", () => {
   const tree = buildFileTree([
     file("z.txt"),
@@ -186,6 +196,8 @@ test("copies unresolved comments by default and all comments when requested", ()
   const resolved: ReviewComment = {
     ...comment,
     id: "two",
+    end: 102,
+    code: "- old value\n- next value",
     status: "resolved",
   };
   const unresolvedOutput = formatComments([resolved, comment], false);
@@ -196,6 +208,8 @@ test("copies unresolved comments by default and all comments when requested", ()
   const allOutput = formatComments([resolved, comment], true);
   assert.ok(allOutput.includes('id="C1"'));
   assert.ok(allOutput.includes('id="C2"'));
+  assert.ok(allOutput.includes('id="C1" selection="range"'));
+  assert.ok(allOutput.includes('id="C2" selection="single-line"'));
   assert.ok(allOutput.includes('status="resolved"'));
   assert.ok(allOutput.includes("Resolved comments are context only"));
 });

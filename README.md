@@ -22,7 +22,8 @@ From any Git repository:
 serve-diff .
 ```
 
-Open **http://127.0.0.1:3333**. Stop with **Ctrl+C**.
+Open one of the printed addresses. Stop with **Ctrl+C**. The network address is
+reachable by other devices on your local network.
 
 ```sh
 serve-diff .                  # current repository

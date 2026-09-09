@@ -1,6 +1,7 @@
 import { createReadStream } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import { createServer } from "node:http";
+import { networkInterfaces } from "node:os";
 import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -21,6 +22,16 @@ const mime: Record<string, string> = {
   ".wasm": "application/wasm",
   ".json": "application/json",
 };
+
+function localNetworkAddress() {
+  for (const addresses of Object.values(networkInterfaces())) {
+    for (const address of addresses ?? []) {
+      if (address.family === "IPv4" && !address.internal)
+        return address.address;
+    }
+  }
+  return null;
+}
 
 export async function startServer(options: {
   directory: string;
@@ -53,6 +64,7 @@ export async function startServer(options: {
     DiffMode,
     { time: number; result: Promise<RepositoryDiff> }
   >();
+  const networkAddress = localNetworkAddress();
   function snapshot(mode: DiffMode) {
     const cached = snapshots.get(mode);
     if (cached && Date.now() - cached.time < 500) return cached.result;
@@ -64,12 +76,14 @@ export async function startServer(options: {
 
   const server = createServer(async (request, response) => {
     try {
-      // Bind only to loopback and reject other origins/hosts before exposing local code.
+      // Reject unadvertised hosts before exposing local code.
       const host = request.headers.host;
       const address = server.address();
       const port =
         address && typeof address === "object" ? address.port : options.port;
-      if (host !== `127.0.0.1:${port}` && host !== `localhost:${port}`)
+      const allowedHosts = ["127.0.0.1", "localhost", "0.0.0.0"];
+      if (networkAddress) allowedHosts.push(networkAddress);
+      if (!allowedHosts.some((address) => host === `${address}:${port}`))
         throw new RequestError(403, "Invalid host");
       if (request.headers.origin && request.headers.origin !== `http://${host}`)
         throw new RequestError(403, "Cross-origin access denied");
@@ -161,7 +175,7 @@ export async function startServer(options: {
   try {
     await new Promise<void>((resolve, reject) => {
       server.once("error", reject);
-      server.listen(options.port, "127.0.0.1", resolve);
+      server.listen(options.port, "0.0.0.0", resolve);
     });
   } catch (error) {
     await vite?.close();
@@ -173,6 +187,13 @@ export async function startServer(options: {
   return {
     root: repository.root,
     url: `http://127.0.0.1:${address.port}`,
+    addresses: {
+      localhost: `http://localhost:${address.port}`,
+      all: `http://0.0.0.0:${address.port}`,
+      network: networkAddress
+        ? `http://${networkAddress}:${address.port}`
+        : null,
+    },
     async close() {
       await vite?.close();
       server.closeAllConnections();

@@ -115,6 +115,21 @@ export function DiffWorkspace() {
       navigateComment,
     };
   });
+  useLayoutEffect(() => {
+    if (
+      draft &&
+      draft.scope === mode &&
+      files.some(
+        (file) =>
+          file.path === draft.path && file.fingerprint === draft.fingerprint,
+      )
+    ) {
+      viewer.current?.setSelectedLines({
+        id: draft.path,
+        range: { start: draft.start, end: draft.end, side: draft.side },
+      });
+    } else viewer.current?.clearSelectedLines();
+  }, [draft, files, mode, viewer]);
   const options = useMemo<CodeViewReactOptions<CommentAnnotation, undefined>>(
     () => ({
       theme: { light: "pierre-light", dark: "pierre-dark" },
@@ -122,7 +137,12 @@ export function DiffWorkspace() {
       diffStyle: layout,
       overflow: wrap ? "wrap" : "scroll",
       diffIndicators: "bars",
-      unsafeCSS: '[data-change-icon="change"] { color: var(--modified); }',
+      unsafeCSS: `
+        [data-change-icon="change"] { color: var(--modified); }
+        [data-selected-line][data-hovered] {
+          --diffs-computed-hovered-line-bg: var(--diffs-computed-selected-line-bg);
+        }
+      `,
       stickyHeaders: true,
       ...(lineHeight === undefined
         ? {}
@@ -130,9 +150,8 @@ export function DiffWorkspace() {
             // Pierre's default header adds 12px padding above and below the row.
             itemMetrics: { lineHeight, diffHeaderHeight: lineHeight + 24 },
           }),
-      enableLineSelection: true,
       enableGutterUtility: true,
-      lineHoverHighlight: "number",
+      lineHoverHighlight: "both",
       layout: { paddingTop: 0, paddingBottom: 24, gap: 1 },
       onGutterUtilityClick(range, context) {
         if (context.item.type !== "diff") return;
@@ -186,7 +205,6 @@ export function DiffWorkspace() {
         : mode === "staged"
           ? "Stage changes with Git to review them here."
           : "Changes will appear here as you edit. Ignored files stay hidden.";
-
   return (
     <main>
       <DiffToolbar />

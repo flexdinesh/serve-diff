@@ -240,6 +240,15 @@ test("serves browser assets and validates API paths, versions, modes, hosts, ori
   await write("hello.ts", "export const hello = true;\n");
   const server = await startServer({ directory: root, port: 0 });
   t.after(() => server.close());
+  assert.match(server.addresses.localhost, /^http:\/\/localhost:\d+$/);
+  assert.match(server.addresses.all, /^http:\/\/0\.0\.0\.0:\d+$/);
+  if (server.addresses.network) {
+    assert.match(
+      server.addresses.network,
+      /^http:\/\/\d{1,3}(?:\.\d{1,3}){3}:\d+$/,
+    );
+    assert.equal((await fetch(server.addresses.network)).status, 200);
+  }
   const snapshot = await repository.snapshot("all");
   const file = snapshot.files[0];
   assert.ok(file);

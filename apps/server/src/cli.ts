@@ -44,7 +44,7 @@ try {
       ...(piped ? { input } : {}),
     });
     console.log(
-      `\n  serve-diff  ${server.url}\n  ${piped ? "Piped diff · fixed snapshot" : server.root}\n\n  Press Ctrl+C to stop.\n`,
+      `\n  serve-diff\n  Local    ${server.addresses.localhost}\n  All      ${server.addresses.all}\n  Network  ${server.addresses.network ?? "unavailable"}\n  ${piped ? "Piped diff · fixed snapshot" : server.root}\n\n  Press Ctrl+C to stop.\n`,
     );
     let closing = false;
     const close = () => {

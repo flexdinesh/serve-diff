@@ -40,6 +40,14 @@ export type CommentAnnotation =
   | { kind: "saved"; comment: ReviewComment }
   | { kind: "draft" };
 
+export function createCommentId(
+  bytes = crypto.getRandomValues(new Uint8Array(16)),
+) {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
+    "",
+  );
+}
+
 // Patch arrays contain only hunks: translate file line numbers before reading them.
 export function lineContext(
   diff: FileDiffMetadata,
@@ -265,8 +273,10 @@ export function formatComments(
         : "";
       lines.push(`    <file path="${attribute(path)}"${oldPath}${change}>`);
       for (const { id, comment } of commentsForFile) {
+        const selection =
+          comment.start === comment.end ? "single-line" : "range";
         lines.push(
-          `      <comment id="${id}" line="${comment.start}" end-line="${comment.end}" side="${comment.side}" scope="${comment.scope}" status="${comment.status}">`,
+          `      <comment id="${id}" selection="${selection}" line="${comment.start}" end-line="${comment.end}" side="${comment.side}" scope="${comment.scope}" status="${comment.status}">`,
           `        <code>${xml(comment.code)}</code>`,
           `        <body>${xml(comment.body)}</body>`,
           "      </comment>",
