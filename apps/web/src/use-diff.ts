@@ -2,6 +2,7 @@ import {
   type CodeViewItem,
   parseDiffFromFile,
   parsePatchFiles,
+  setLanguageOverride,
 } from "@pierre/diffs";
 import {
   type ChangedFile,
@@ -17,6 +18,7 @@ import {
   useState,
 } from "react";
 import type { CommentAnnotation } from "./review-model.ts";
+import { languageOverride } from "./display-options.ts";
 
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -208,27 +210,37 @@ export function useDiff(mode: DiffMode, composing: boolean) {
                         ).flatMap((patch) => patch.files)[0]
                       : undefined;
                 if (parsed && parsed.hunks.length > 0) {
+                  const firstLine =
+                    parsed.hunks[0]?.additionStart === 1
+                      ? parsed.additionLines[0]
+                      : parsed.hunks[0]?.deletionStart === 1
+                        ? parsed.deletionLines[0]
+                        : undefined;
+                  const language = languageOverride(file.path, firstLine);
+                  const displayDiff = language
+                    ? setLanguageOverride(parsed, language)
+                    : parsed;
                   // Reuse worker highlighting across navigation and scope reloads.
-                  parsed.cacheKey = JSON.stringify([
+                  displayDiff.cacheKey = JSON.stringify([
                     repositoryRoot,
                     mode,
                     file.path,
                     file.fingerprint,
                   ]);
-                  parsed.name = file.path;
-                  if (file.oldPath) parsed.prevName = file.oldPath;
-                  file.additions = parsed.hunks.reduce(
+                  displayDiff.name = file.path;
+                  if (file.oldPath) displayDiff.prevName = file.oldPath;
+                  file.additions = displayDiff.hunks.reduce(
                     (sum, hunk) => sum + hunk.additionLines,
                     0,
                   );
-                  file.deletions = parsed.hunks.reduce(
+                  file.deletions = displayDiff.hunks.reduce(
                     (sum, hunk) => sum + hunk.deletionLines,
                     0,
                   );
                   item = {
                     id: file.path,
                     type: "diff",
-                    fileDiff: parsed,
+                    fileDiff: displayDiff,
                   };
                 } else
                   item = messageItem(

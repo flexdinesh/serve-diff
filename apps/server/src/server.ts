@@ -113,6 +113,17 @@ export async function startServer(options: {
               "Diff changed. Refresh to load the latest version.",
             );
           body = await repository.patch(mode, file, current.head);
+        } else if (url.pathname === "/api/contents") {
+          const path = url.searchParams.get("path");
+          const file = current.files.find((entry) => entry.path === path);
+          if (!file)
+            throw new RequestError(404, "File is not in the current diff");
+          if (url.searchParams.get("version") !== file.fingerprint)
+            throw new RequestError(
+              409,
+              "Diff changed. Refresh to load the latest version.",
+            );
+          body = await repository.contents(mode, file, current.head);
         } else {
           throw new RequestError(404, "Unknown API route");
         }

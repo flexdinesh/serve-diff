@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 import { ancestorPaths } from "./file-tree.ts";
+import { readDiffTheme, readLineDiffType } from "./display-options.ts";
 import { save, saved, savedReviews } from "./preferences.ts";
 import {
   anchored,
@@ -39,6 +40,12 @@ function usePageState() {
     saved("theme") === "dark" ? "dark" : "light",
   );
   const [wrap, setWrap] = useState(() => saved("wrap") === "true");
+  const [diffTheme, setDiffTheme] = useState(() =>
+    readDiffTheme(saved("diff-theme")),
+  );
+  const [lineDiffType, setLineDiffType] = useState(() =>
+    readLineDiffType(saved("line-diff-type")),
+  );
   const [tab, setTab] = useState<"files" | "comments">("files");
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState("");
@@ -102,6 +109,12 @@ function usePageState() {
   useEffect(() => {
     save("wrap", String(wrap));
   }, [wrap]);
+  useEffect(() => {
+    save("diff-theme", diffTheme);
+  }, [diffTheme]);
+  useEffect(() => {
+    save("line-diff-type", lineDiffType);
+  }, [lineDiffType]);
   useEffect(() => {
     document.title = `serve-diff · ${piped ? "Piped diff" : "Local diff"}`;
   }, [piped]);
@@ -243,6 +256,10 @@ function usePageState() {
       setLayout,
       wrap,
       setWrap,
+      diffTheme,
+      setDiffTheme,
+      lineDiffType,
+      setLineDiffType,
       collapsed,
       setCollapsed,
     },

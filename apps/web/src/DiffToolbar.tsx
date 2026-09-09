@@ -1,10 +1,27 @@
 import { isDiffMode } from "@serve-diff/shared";
 import { useAppState } from "./app-state.tsx";
+import {
+  DIFF_THEMES,
+  LINE_DIFF_TYPES,
+  readDiffTheme,
+  readLineDiffType,
+} from "./display-options.ts";
 
 export function DiffToolbar() {
   const {
     source: { mode, piped, changeMode },
-    display: { layout, setLayout, wrap, setWrap, collapsed, setCollapsed },
+    display: {
+      layout,
+      setLayout,
+      wrap,
+      setWrap,
+      diffTheme,
+      setDiffTheme,
+      lineDiffType,
+      setLineDiffType,
+      collapsed,
+      setCollapsed,
+    },
     navigation: { files },
   } = useAppState();
   const allCollapsed =
@@ -59,6 +76,39 @@ export function DiffToolbar() {
       >
         Wrap
       </button>
+      <label
+        className="toolbar-select"
+        title="Highlight changed text within paired modified lines"
+      >
+        <span>Inline</span>
+        <select
+          aria-label="Inline change detail"
+          value={lineDiffType}
+          onChange={(event) =>
+            setLineDiffType(readLineDiffType(event.target.value))
+          }
+        >
+          {LINE_DIFF_TYPES.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="toolbar-select">
+        <span>Code theme</span>
+        <select
+          aria-label="Code theme"
+          value={diffTheme}
+          onChange={(event) => setDiffTheme(readDiffTheme(event.target.value))}
+        >
+          {DIFF_THEMES.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
       <fieldset className="segmented" aria-label="Diff layout">
         <button
           type="button"

@@ -80,6 +80,10 @@ test("separates HEAD, index, working tree, and untracked files without writing t
         `-${"export const value = '"}${mode === "unstaged" ? "staged" : "committed"}`,
       ),
     );
+    assert.deepEqual(await repository.contents(mode, file, snapshot.head), {
+      before: `export const value = '${mode === "unstaged" ? "staged" : "committed"}';\n`,
+      after: `export const value = '${mode === "staged" ? "staged" : "working"}';\n`,
+    });
     assert.match(
       patch,
       new RegExp(
@@ -141,9 +145,16 @@ test("preserves rename pairs, unusual filenames, deletions, binary and mode-only
   assert.equal(renamed.status, "R");
   assert.equal(renamed.indexStatus, "R");
   assert.equal(renamed.worktreeStatus, " ");
-  assert.equal(
-    snapshot.files.find((file) => file.path === "delete.txt")?.deletions,
-    1,
+  assert.deepEqual(
+    await repository.contents("staged", renamed, snapshot.head),
+    { before: "keep this line\n", after: "keep this line\n" },
+  );
+  const deleted = snapshot.files.find((file) => file.path === "delete.txt");
+  assert.ok(deleted);
+  assert.equal(deleted.deletions, 1);
+  assert.deepEqual(
+    await repository.contents("staged", deleted, snapshot.head),
+    { before: "delete\n", after: "" },
   );
   const binary = snapshot.files.find((file) => file.path === "binary.bin");
   assert.ok(binary);
@@ -151,6 +162,10 @@ test("preserves rename pairs, unusual filenames, deletions, binary and mode-only
   assert.match(
     (await repository.patch("staged", binary, snapshot.head)).message ?? "",
     /Binary/,
+  );
+  await assert.rejects(
+    repository.contents("staged", binary, snapshot.head),
+    /Full text is unavailable/,
   );
   const mode = snapshot.files.find((file) => file.path === "mode.sh");
   assert.ok(mode);
@@ -200,12 +215,17 @@ test("does not follow untracked symlinks and limits oversized previews", async (
   assert.ok(link);
   const result = await repository.patch("all", link, null);
   assert.doesNotMatch(result.patch, /DO NOT READ TARGET/);
+  assert.deepEqual(await repository.contents("all", link, null), {
+    before: "",
+    after: secret,
+  });
   const large = snapshot.files.find((file) => file.path === "large.txt");
   assert.ok(large);
   assert.match(
     (await repository.patch("all", large, null)).message ?? "",
     /2 MiB/,
   );
+  await assert.rejects(repository.contents("all", large, null), /2 MiB/);
 });
 
 test("reports merge conflicts and detached HEAD", async (t) => {
@@ -253,6 +273,7 @@ test("serves browser assets and validates API paths, versions, modes, hosts, ori
   const file = snapshot.files[0];
   assert.ok(file);
   const fileURL = `${server.url}/api/file?${new URLSearchParams({ path: file.path, version: file.fingerprint })}`;
+  const contentsURL = `${server.url}/api/contents?${new URLSearchParams({ path: file.path, version: file.fingerprint })}`;
   assert.equal((await fetch(server.url)).status, 200);
   assert.match(await (await fetch(server.url)).text(), /serve-diff/);
   assert.equal(
@@ -261,6 +282,10 @@ test("serves browser assets and validates API paths, versions, modes, hosts, ori
   );
   assert.equal((await fetch(`${server.url}/api/diff`)).status, 200);
   assert.match(await (await fetch(fileURL)).text(), /export const hello/);
+  assert.deepEqual(await (await fetch(contentsURL)).json(), {
+    before: "",
+    after: "export const hello = true;\n",
+  });
   assert.equal((await fetch(`${server.url}/api/diff?mode=bad`)).status, 400);
   assert.equal(
     (await fetch(`${server.url}/api/file?path=../../.git/config`)).status,
@@ -268,6 +293,11 @@ test("serves browser assets and validates API paths, versions, modes, hosts, ori
   );
   assert.equal(
     (await fetch(`${server.url}/api/file?path=hello.ts&version=stale`)).status,
+    409,
+  );
+  assert.equal(
+    (await fetch(`${server.url}/api/contents?path=hello.ts&version=stale`))
+      .status,
     409,
   );
   const invalidHostStatus = await new Promise<number | undefined>(

@@ -145,5 +145,11 @@ export function openPatch(input: string): Repository {
         throw new RequestError(404, "File is not in the piped diff");
       return preview;
     },
+    async contents() {
+      throw new RequestError(
+        400,
+        "Full context is unavailable for piped diffs",
+      );
+    },
   };
 }

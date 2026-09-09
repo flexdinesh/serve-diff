@@ -1,10 +1,64 @@
-import type { CodeViewItem, DiffLineAnnotation } from "@pierre/diffs";
-import { CodeView, type CodeViewReactOptions } from "@pierre/diffs/react";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import type {
+  CodeViewItem,
+  DiffLineAnnotation,
+  FileDiffMetadata,
+  SelectedLineRange,
+} from "@pierre/diffs";
+import {
+  CodeView,
+  type CodeViewReactOptions,
+  useWorkerPool,
+} from "@pierre/diffs/react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { togglePath, useAppState } from "./app-state.tsx";
 import { DiffToolbar } from "./DiffToolbar.tsx";
+import { themesFor } from "./display-options.ts";
 import { DraftComment, ReviewCommentCard } from "./review.tsx";
 import type { CommentAnnotation } from "./review-model.ts";
+
+function selectionLabel(prefix: string, range: SelectedLineRange | null) {
+  if (!range) return "";
+  const start = Math.min(range.start, range.end);
+  const end = Math.max(range.start, range.end);
+  return start === end
+    ? `${prefix} line ${start}`
+    : `${prefix} lines ${start}–${end}`;
+}
+
+async function loadDiffFiles(
+  fileDiff: FileDiffMetadata,
+  repository: NonNullable<
+    ReturnType<typeof useAppState>["source"]["repository"]
+  >,
+) {
+  const file = repository.files.find((entry) => entry.path === fileDiff.name);
+  if (!file) throw new Error("File is no longer in this diff");
+  const response = await fetch(
+    `/api/contents?${new URLSearchParams({
+      mode: repository.mode,
+      path: file.path,
+      version: file.fingerprint,
+    })}`,
+  );
+  const body: unknown = await response.json();
+  if (
+    typeof body !== "object" ||
+    body === null ||
+    !("before" in body) ||
+    typeof body.before !== "string" ||
+    !("after" in body) ||
+    typeof body.after !== "string"
+  )
+    throw new Error("Unable to load full file context");
+  if (!response.ok) throw new Error("Unable to load full file context");
+  return {
+    oldFile: {
+      name: file.oldPath ?? file.path,
+      contents: body.before,
+    },
+    newFile: { name: file.path, contents: body.after },
+  };
+}
 
 // Pierre needs numeric versions. Cache them by preview identity and annotation
 // contents so typing in a React comment editor doesn't rebuild the diff DOM.
@@ -32,7 +86,15 @@ function itemVersions() {
 export function DiffWorkspace() {
   const {
     source: { diff, repository, piped, mode },
-    display: { theme, layout, wrap, collapsed, setCollapsed },
+    display: {
+      theme,
+      diffTheme,
+      lineDiffType,
+      layout,
+      wrap,
+      collapsed,
+      setCollapsed,
+    },
     navigation: { files, filter },
     reviewed: { isReviewed, toggleReviewed },
     draft,
@@ -42,6 +104,14 @@ export function DiffWorkspace() {
   } = useAppState();
   const lineMetric = useRef<HTMLSpanElement>(null);
   const [lineHeight, setLineHeight] = useState<number>();
+  const [selectionFeedback, setSelectionFeedback] = useState("");
+  const workerPool = useWorkerPool();
+  useEffect(() => {
+    if (!workerPool) return;
+    void workerPool
+      .setRenderOptions({ theme: themesFor(diffTheme), lineDiffType })
+      .catch((error: unknown) => console.error(error));
+  }, [workerPool, diffTheme, lineDiffType]);
   // Virtual scroll offsets must use the same row height as our rem-based CSS.
   // Observe a sizing probe so browser font preferences also stay in sync.
   useLayoutEffect(() => {
@@ -132,12 +202,26 @@ export function DiffWorkspace() {
   }, [draft, files, mode, viewer]);
   const options = useMemo<CodeViewReactOptions<CommentAnnotation, undefined>>(
     () => ({
-      theme: { light: "pierre-light", dark: "pierre-dark" },
+      theme: themesFor(diffTheme),
       themeType: theme,
       diffStyle: layout,
+      lineDiffType,
       overflow: wrap ? "wrap" : "scroll",
       diffIndicators: "bars",
+      hunkSeparators: piped ? "metadata" : "line-info-basic",
+      expansionLineCount: 20,
+      collapsedContextThreshold: 3,
+      ...(piped
+        ? {}
+        : {
+            loadDiffFiles(fileDiff) {
+              const current = actions.current.repository;
+              if (!current) throw new Error("Repository is unavailable");
+              return loadDiffFiles(fileDiff, current);
+            },
+          }),
       unsafeCSS: `
+        [data-diffs-header] { cursor: pointer; }
         [data-change-icon="change"] { color: var(--modified); }
         [data-selected-line][data-hovered] {
           --diffs-computed-hovered-line-bg: var(--diffs-computed-selected-line-bg);
@@ -165,6 +249,15 @@ export function DiffWorkspace() {
         );
         if (file) current.begin(file, context.item.fileDiff, range);
       },
+      onLineSelectionStart(range) {
+        setSelectionFeedback(selectionLabel("Selecting", range));
+      },
+      onLineSelectionChange(range) {
+        setSelectionFeedback(selectionLabel("Selecting", range));
+      },
+      onLineSelectionEnd(range) {
+        setSelectionFeedback(selectionLabel("Selected", range));
+      },
       onLineEnter(_event, context) {
         requestAnimationFrame(() =>
           context.element?.shadowRoot
@@ -173,7 +266,7 @@ export function DiffWorkspace() {
         );
       },
     }),
-    [theme, layout, wrap, lineHeight],
+    [theme, diffTheme, lineDiffType, layout, wrap, lineHeight, piped],
   );
 
   const scopeDescription = piped
@@ -211,8 +304,37 @@ export function DiffWorkspace() {
       <div id="notice" role="status" hidden={!diff.notice}>
         {diff.notice}
       </div>
+      <p className="visually-hidden" role="status" aria-live="polite">
+        {selectionFeedback}
+      </p>
       <div className="review-surface">
-        <section id="viewer" aria-label="Code differences">
+        <section
+          id="viewer"
+          aria-label="Code differences"
+          onClickCapture={(event) => {
+            const path = event.nativeEvent.composedPath();
+            if (
+              path.some(
+                (target) =>
+                  target instanceof HTMLElement &&
+                  target.matches(
+                    "button, a, input, select, textarea, [role=button]",
+                  ),
+              ) ||
+              !path.some(
+                (target) =>
+                  target instanceof HTMLElement &&
+                  target.hasAttribute("data-diffs-header"),
+              )
+            )
+              return;
+            const item = viewer.current
+              ?.getInstance()
+              ?.getRenderedItems()
+              .find((rendered) => path.includes(rendered.element));
+            if (item) setCollapsed((previous) => togglePath(previous, item.id));
+          }}
+        >
           <span
             ref={lineMetric}
             className="diff-line-metric"

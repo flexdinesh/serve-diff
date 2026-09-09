@@ -425,7 +425,48 @@ export async function openRepository(directory: string) {
       );
     }
   }
-  return { root, snapshot, patch };
+  async function contents(
+    mode: DiffMode,
+    file: ChangedFile,
+    head: string | null,
+  ) {
+    if (file.binary || file.status === "U")
+      throw new RequestError(400, "Full text is unavailable for this file");
+    const previousPath = file.oldPath ?? file.path;
+    const readBlob = async (source: string, path: string, missing: boolean) => {
+      try {
+        return (await git(root, ["show", `${source}:${path}`], MAX_PATCH_BYTES))
+          .stdout;
+      } catch (error) {
+        if (missing) return "";
+        throw error;
+      }
+    };
+    const readWorking = async () => {
+      const stat = await lstat(join(root, file.path));
+      if (stat.size > MAX_PATCH_BYTES)
+        throw new RequestError(413, "File exceeds the 2 MiB preview limit");
+      return stat.isSymbolicLink()
+        ? await readlink(join(root, file.path))
+        : await readFile(join(root, file.path), "utf8");
+    };
+    const beforeSource = mode === "unstaged" ? "" : head;
+    const before = await readBlob(
+      beforeSource ?? "",
+      previousPath,
+      !beforeSource || file.status === "A" || file.status === "?",
+    );
+    const after =
+      mode === "staged"
+        ? await readBlob("", file.path, file.status === "D")
+        : file.status === "D"
+          ? ""
+          : await readWorking();
+    if (before.includes("\0") || after.includes("\0"))
+      throw new RequestError(400, "Full text is unavailable for binary files");
+    return { before, after };
+  }
+  return { root, snapshot, patch, contents };
 }
 
 export type Repository = Awaited<ReturnType<typeof openRepository>>;
