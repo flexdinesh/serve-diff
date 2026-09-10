@@ -131,7 +131,9 @@ export function FileNavigation({
     return (
       <ul className="tree-list">
         {nodes.map((node) => {
-          const style = { paddingLeft: 8 + depth * 16 };
+          const style = {
+            paddingLeft: `calc(var(--space-2) + ${depth} * var(--space-4))`,
+          };
           if (node.kind === "folder") {
             const open = !closed.has(node.path);
             return (

@@ -1,19 +1,15 @@
-.sidebar {
-  flex-basis: var(--sidebar-width, 280px);
-  width: var(--sidebar-width, 280px);
-}
 .sidebar.is-collapsed {
   display: none;
 }
 .tree-control {
-  font-size: var(--icon-tree);
+  font-size: var(--icon-lg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 4px;
+  width: var(--control-height);
+  height: var(--control-height);
+  border-radius: var(--radius-md);
   color: var(--muted);
   padding: 0;
 }
@@ -31,21 +27,22 @@
   flex-shrink: 0;
   border: 0;
   border-bottom: 1px solid var(--border);
-  padding: 0 8px;
-  margin: 0 0 12px;
-  gap: 4px;
+  padding: 0 var(--space-2);
+  margin: 0 0 var(--space-3);
+  gap: var(--space-1);
   min-width: 0;
 }
 .sidebar-tabs button[aria-pressed] {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--space-1);
   min-width: 0;
   flex: 1;
-  padding: 0 4px;
-  color: var(--muted);
-  font-size: var(--text-md);
+  padding: 0 var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
   border-bottom: 2px solid transparent;
 }
 .sidebar-tabs .tree-control {
@@ -65,7 +62,8 @@
   font-size: var(--text-xs);
 }
 #file-panel {
-  flex: 1;
+  /* Keep navigation reachable when enlarged text makes the shell scroll. */
+  flex: 1 0 calc(4 * var(--space-12));
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -78,39 +76,26 @@
 #sidebar-resizer[hidden] {
   display: none;
 }
-#file-tree {
-  padding-inline: 7px;
-}
 .tree-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
-.tree-folder {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  border-radius: 5px;
-  padding-block: 4px;
-  padding-right: 9px;
-  color: var(--fg);
-  font-size: var(--text-base);
-  line-height: var(--leading-tree);
-}
 .tree-chevron {
-  width: 12px;
+  width: var(--space-3);
+  flex-shrink: 0;
   text-align: center;
   color: var(--muted);
 }
 .folder-icon {
   color: var(--muted);
-  width: var(--icon-md);
-  height: var(--icon-md);
+  width: var(--icon-base);
+  height: var(--icon-base);
   stroke-linejoin: round;
   fill: color-mix(in srgb, currentColor 10%, transparent);
 }
 .file-row .file-icon {
-  margin-left: 17px;
+  margin-left: calc(var(--space-3) + var(--space-2));
   width: 1em;
   height: 1em;
   flex-shrink: 0;
@@ -127,24 +112,24 @@
 .file-icon[data-kind="react"],
 .file-icon[data-kind="style"],
 .file-icon[data-kind="go"] {
-  color: light-dark(#2876b4, #75b9f2);
+  color: var(--file-code);
 }
 .file-icon[data-kind="javascript"],
 .file-icon[data-kind="json"] {
-  color: light-dark(#9b790b, #e2c564);
+  color: var(--file-data);
 }
 .file-icon[data-kind="git"],
 .file-icon[data-kind="html"],
 .file-icon[data-kind="rust"] {
-  color: light-dark(#bd5940, #e5a18b);
+  color: var(--file-markup);
 }
 .file-icon[data-kind="image"],
 .file-icon[data-kind="python"],
 .file-icon[data-kind="config"] {
-  color: light-dark(#8761b4, #bc9de2);
+  color: var(--file-config);
 }
 .file-icon[data-kind="shell"] {
-  color: var(--green);
+  color: var(--success);
 }
 .monogram-icon path {
   fill: currentColor;
@@ -165,24 +150,24 @@
   bottom: -3px;
   border-radius: 50%;
   background: var(--panel);
-  color: var(--green);
-  font: 700 var(--text-2xs) sans-serif;
+  color: var(--success);
+  font: var(--weight-semibold) var(--text-xs) var(--font-sans);
 }
 .file-row .file-status {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 5px;
-  min-width: 21px;
+  gap: var(--space-1);
+  min-width: var(--space-6);
   flex-shrink: 0;
 }
 .file-status[data-state="conflict"] {
-  color: var(--red);
+  color: var(--error);
 }
 .staging-dot {
   display: inline-block;
-  width: 7px;
-  height: 7px;
+  width: var(--space-2);
+  height: var(--space-2);
   border: 1px solid currentColor;
   border-radius: 50%;
   flex-shrink: 0;
@@ -196,8 +181,8 @@
 .git-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px 10px;
-  padding: 10px 16px;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-2) var(--space-4);
   border-top: 1px solid var(--border);
   color: var(--muted);
   font-size: var(--text-xs);
@@ -205,20 +190,21 @@
 .git-legend span {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 .file-comment-count {
   color: var(--accent);
-  font: var(--text-2xs) var(--font-sans);
+  font: var(--text-xs) var(--font-sans);
   white-space: nowrap;
 }
 #sidebar-resizer {
+  /* Overlap the pane divider without shifting the viewer's alignment. */
   margin: 0 0 0 -3px;
   width: 5px;
   border: 0;
   flex: 0 0 5px;
   cursor: col-resize;
-  z-index: 12;
+  z-index: var(--layer-resizer);
   position: relative;
   background: transparent;
   touch-action: none;
@@ -233,7 +219,7 @@
   cursor: col-resize;
 }
 .copy-comments-bar {
-  padding: 4px 14px 8px;
+  padding: var(--space-1) var(--space-4) var(--space-2);
 }
 .review-tools {
   flex-shrink: 0;
@@ -244,7 +230,8 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 4px 14px;
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-4);
   color: var(--muted);
   font-size: var(--text-sm);
 }
@@ -257,68 +244,63 @@
 }
 .copy-comments-actions {
   display: flex;
-  gap: 6px;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 .copy-comments-actions .button {
-  flex: 1;
-  font-size: var(--text-base);
+  flex: 1 1 auto;
   justify-content: center;
   background: var(--bg);
+  white-space: normal;
 }
 #comment-feedback {
   font-size: var(--text-xs);
   line-height: var(--leading-copy);
-  margin: 7px 0 0;
+  margin: var(--space-2) 0 0;
   color: var(--accent);
   overflow-wrap: anywhere;
 }
 #comment-feedback:empty {
   margin: 0;
 }
-.sidebar-bottom {
-  padding-top: 14px;
-}
-.summary-label {
-  margin-bottom: 10px;
-}
 #comments-panel {
-  flex: 1;
+  flex: 1 0 calc(4 * var(--space-12));
   min-height: 0;
   overflow: auto;
-  padding: 0 10px 12px;
+  padding: 0 var(--space-4) var(--space-3);
 }
 .comment-summary {
   color: var(--muted);
   font-size: var(--text-sm);
-  margin: 2px 4px 12px;
+  margin: 0 0 var(--space-3);
 }
 .comment-empty {
   color: var(--muted);
-  font-size: var(--text-base);
-  padding: 0 4px;
-  line-height: var(--leading-relaxed);
+  font-size: var(--text-md);
+  padding: 0;
+  line-height: var(--leading-copy);
 }
 .comment-card,
 .comment-editor {
   color: var(--fg);
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  margin: 10px 14px;
-  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  margin: var(--space-3) var(--space-4);
+  padding: var(--space-3);
   font: var(--text-base) / var(--leading-copy) var(--font-sans);
   min-width: 0;
   box-sizing: border-box;
 }
 .comment-card {
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--border-strong);
 }
 .comment-card.resolved {
-  border-left-color: var(--green);
+  border-left-color: var(--success);
 }
 .comment-card-header {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: start;
   color: var(--muted);
   font-size: var(--text-sm);
@@ -326,16 +308,16 @@
 .comment-state {
   margin-left: auto;
   font-size: var(--text-xs);
-  padding: 1px 5px;
+  padding: 1px var(--space-1);
   background: var(--hover);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 .resolved .comment-state {
-  color: var(--green);
+  color: var(--success);
 }
 .comment-body {
   font-size: var(--text-md);
-  margin: 10px 0 4px;
+  margin: var(--space-2) 0 var(--space-1);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -343,46 +325,45 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 5px;
-  margin-top: 8px;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }
 .comment-actions > span {
   color: var(--muted);
   font-size: var(--text-xs);
   margin-right: auto;
 }
-.comment-actions .quiet-button {
-  font-size: var(--text-sm);
-}
-.comment-actions .button {
-  font-size: var(--text-base);
+.destructive-button {
+  color: var(--error);
 }
 .comment-location {
   text-align: left;
   color: var(--accent);
   font: var(--text-sm) / var(--leading-copy) var(--font-mono);
   padding: 0;
+  min-height: var(--control-compact);
   white-space: normal;
   overflow-wrap: anywhere;
 }
 .comment-outdated {
   color: var(--muted);
   font-size: var(--text-xs);
-  margin-block: 7px;
+  margin-block: var(--space-2);
 }
 .comment-card details {
-  margin-top: 8px;
+  margin-top: var(--space-2);
   color: var(--muted);
   font-size: var(--text-xs);
 }
 .comment-card summary {
   cursor: pointer;
+  min-height: var(--control-compact);
 }
 .comment-card pre {
-  max-height: 180px;
+  max-height: calc(4 * var(--space-12));
   overflow: auto;
-  padding: 8px;
-  border-radius: 4px;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
   background: var(--bg);
   color: var(--fg);
   font: var(--text-sm) / var(--leading-copy) var(--font-mono);
@@ -392,35 +373,36 @@
 .comment-editor strong {
   display: block;
   font-size: var(--text-sm);
-  font-weight: 550;
-  margin-bottom: 9px;
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-2);
   overflow-wrap: anywhere;
 }
 .comment-editor textarea {
   display: block;
   resize: vertical;
-  min-height: 85px;
+  min-height: 6rem;
   width: 100%;
-  padding: 9px 10px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  font: var(--text-md) / var(--leading-editor) var(--font-sans);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  font: var(--text-md) / var(--leading-copy) var(--font-sans);
   background: var(--bg);
   color: var(--fg);
   box-sizing: border-box;
 }
 .primary-button {
   background: var(--accent);
-  color: var(--bg);
+  color: var(--on-accent);
   border-color: var(--accent);
 }
-.primary-button:not(:disabled):hover {
-  background: color-mix(in srgb, var(--accent) 90%, var(--fg));
+.primary-button:not(:disabled):hover,
+.primary-button:not(:disabled):active {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 #comments-panel .comment-card,
 #comments-panel .comment-editor {
-  margin: 8px 0;
-  padding: 10px;
+  margin: var(--space-2) 0;
   background: var(--bg);
 }
 #comments-panel .comment-actions {
@@ -431,29 +413,35 @@
 }
 .copy-dialog {
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
   color: var(--fg);
-  width: min(680px, 90vw);
-  padding: 22px;
+  width: min(var(--reading-width), calc(100vw - 2 * var(--page-gutter)));
+  max-width: calc(100vw - 2 * var(--page-gutter));
+  max-height: calc(100dvh - 2 * var(--page-gutter));
+  overflow: auto;
+  padding: var(--space-6);
+  box-shadow: var(--shadow-overlay);
 }
 .copy-dialog::backdrop {
-  background: #0007;
+  background: var(--backdrop);
 }
 .copy-dialog p {
-  color: var(--muted);
-  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-size: var(--text-md);
+  line-height: var(--leading-copy);
+  margin: var(--space-2) 0 var(--space-4);
 }
 .copy-dialog textarea {
   width: 100%;
-  height: 300px;
-  font: var(--text-sm) / var(--leading-editor) var(--font-mono);
+  height: min(20rem, 40dvh);
+  font: var(--text-sm) / var(--leading-copy) var(--font-mono);
   color: var(--fg);
   background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 10px;
-  margin-bottom: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
   resize: vertical;
 }
 @media (max-width: 760px) {
@@ -463,7 +451,6 @@
   }
   .sidebar.open {
     display: flex;
-    width: min(320px, 88vw);
   }
   #sidebar-resizer {
     display: none;
@@ -475,13 +462,50 @@
   }
   .comment-card,
   .comment-editor {
-    margin: 8px 4px;
-    padding: 10px;
+    margin: var(--space-2) var(--space-1);
   }
   .comment-actions {
     flex-wrap: wrap;
   }
   .comment-actions > span {
     display: none;
+  }
+}
+
+/* Enlarge app chrome, never Pierre's measured header or code-row slots. */
+@media (max-width: 760px), (pointer: coarse) {
+  .topbar .button,
+  .icon-button,
+  .tree-control,
+  .tree-folder,
+  .file-row,
+  .sidebar-tabs button,
+  .review-tools-toggle,
+  .review-progress button,
+  .copy-comments-actions .button,
+  .comment-actions button,
+  .comment-location,
+  .comment-card summary,
+  .copy-dialog .button,
+  .toolbar .quiet-button,
+  .toolbar select,
+  .segmented button,
+  .search-box {
+    min-height: var(--touch-target);
+  }
+  .icon-button,
+  .tree-control,
+  #refresh {
+    min-width: var(--touch-target);
+  }
+  .sidebar-tabs {
+    height: calc(var(--touch-target) + var(--space-2));
+  }
+  .comment-editor textarea,
+  .copy-dialog textarea,
+  .search-box input,
+  .toolbar select {
+    /* Prevent mobile input auto-zoom; code remains at its measured size. */
+    font-size: var(--text-input-touch);
   }
 }

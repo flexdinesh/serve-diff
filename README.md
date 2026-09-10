@@ -57,6 +57,6 @@ pnpm check
 
 Run `pnpm build` after frontend changes, then restart `serve-diff`. No global reinstall needed.
 
-Typography lives in `apps/web/src/typography.css`: reuse its rem-based text and icon tokens and unitless line heights. SVG monogram lettering uses viewBox units so it scales with its icon.
+UI work follows [DESIGN.md](DESIGN.md). Reuse semantic tokens in `apps/web/src/tokens.css` and typography in `apps/web/src/typography.css`; preserve Pierre's measured code geometry.
 
 `App.tsx` composes the page sections. `app-state.tsx` owns shared state through `AppProvider`; `DiffWorkspace.tsx` owns Pierre rendering, and `use-review.ts` handles comment persistence. Section-only state stays with its component.
