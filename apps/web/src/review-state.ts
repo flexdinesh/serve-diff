@@ -1,0 +1,17 @@
+import type { ChangedFile } from "@serve-diff/shared";
+
+export function toggleReviewedFileState(
+  reviews: Map<string, string>,
+  collapsed: Set<string>,
+  file: ChangedFile,
+) {
+  const nextReviews = new Map(reviews);
+  if (nextReviews.get(file.path) === file.fingerprint) {
+    nextReviews.delete(file.path);
+    return { reviews: nextReviews, collapsed };
+  }
+  nextReviews.set(file.path, file.fingerprint);
+  const nextCollapsed = new Set(collapsed);
+  nextCollapsed.add(file.path);
+  return { reviews: nextReviews, collapsed: nextCollapsed };
+}
