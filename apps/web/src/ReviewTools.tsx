@@ -17,7 +17,7 @@ export function ReviewTools() {
   const allFiles = repository?.files ?? [];
   const additions = allFiles.reduce((sum, file) => sum + file.additions, 0);
   const deletions = allFiles.reduce((sum, file) => sum + file.deletions, 0);
-  const unresolved = review.comments.filter(
+  const unresolved = review.currentComments.filter(
     (comment) => comment.status === "open",
   ).length;
   return (
@@ -44,21 +44,31 @@ export function ReviewTools() {
               className="button"
               disabled={!unresolved}
               onClick={() => {
-                void review.copy(false);
+                void review.copyCurrent(false);
               }}
             >
-              Copy unresolved
+              Copy current unresolved
             </button>
             <button
               type="button"
               id="copy-all"
+              className="button"
+              disabled={!review.currentComments.length}
+              onClick={() => {
+                void review.copyCurrent(true);
+              }}
+            >
+              Copy current all
+            </button>
+            <button
+              type="button"
               className="button"
               disabled={!review.comments.length}
               onClick={() => {
                 void review.copy(true);
               }}
             >
-              Copy all
+              Copy all rounds
             </button>
           </div>
           <p id="comment-feedback" role="status" aria-live="polite">

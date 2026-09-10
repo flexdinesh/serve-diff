@@ -36,6 +36,12 @@ export interface ReviewOrigin {
   };
 }
 
+export interface ReviewRound {
+  key: string;
+  comments: ReviewComment[];
+  current: boolean;
+}
+
 export type CommentAnnotation =
   | { kind: "saved"; comment: ReviewComment }
   | { kind: "draft" };
@@ -301,4 +307,40 @@ export function anchored(
         file.path === comment.path && file.fingerprint === comment.fingerprint,
     )
   );
+}
+
+function currentComment(
+  comment: ReviewComment,
+  repository: RepositoryDiff | null,
+) {
+  if (comment.scope !== repository?.mode) return false;
+  if (comment.origin) return comment.origin.revision === repository.revision;
+  return repository.files.some(
+    (file) =>
+      file.path === comment.path && file.fingerprint === comment.fingerprint,
+  );
+}
+
+// A copied snapshot is a review round. New comments automatically form the next
+// round after the working tree changes; prior feedback remains available as history.
+export function reviewRounds(
+  comments: readonly ReviewComment[],
+  repository: RepositoryDiff | null,
+): ReviewRound[] {
+  const rounds = new Map<string, ReviewRound>();
+  for (const comment of comments) {
+    const current = currentComment(comment, repository);
+    const key = comment.origin
+      ? `snapshot:${comment.scope}:${comment.origin.revision}`
+      : `legacy:${current ? "current" : comment.fingerprint}`;
+    const round = rounds.get(key) ?? { key, comments: [], current };
+    round.comments.push(comment);
+    rounds.set(key, round);
+  }
+  return [...rounds.values()].sort((left, right) => {
+    if (left.current !== right.current) return left.current ? -1 : 1;
+    return (
+      (right.comments[0]?.createdAt ?? 0) - (left.comments[0]?.createdAt ?? 0)
+    );
+  });
 }

@@ -13,6 +13,7 @@ import {
   createCommentId,
   formatComments,
   parseComments,
+  reviewRounds,
   type ReviewComment,
 } from "./review-model.ts";
 
@@ -30,6 +31,8 @@ export function useReview(
   const key = root ? `serve-diff:comments:${root}` : stored.key;
   const previousRoot = useRef("");
   const comments = stored.key === key ? stored.comments : [];
+  const rounds = reviewRounds(comments, repository);
+  const currentComments = rounds.find((round) => round.current)?.comments ?? [];
   const [feedback, setFeedback] = useState("");
   const [copyText, setCopyText] = useState<string | null>(null);
   useEffect(() => {
@@ -123,10 +126,13 @@ export function useReview(
     if (draft?.id === comment.id) setDraft(null);
     commit(comments.filter((entry) => entry.id !== comment.id));
   }
-  async function copy(includeResolved: boolean) {
+  async function copyComments(
+    selected: readonly ReviewComment[],
+    includeResolved: boolean,
+  ) {
     const copied = includeResolved
-      ? comments
-      : comments.filter((comment) => comment.status === "open");
+      ? selected
+      : selected.filter((comment) => comment.status === "open");
     const output = formatComments(copied, includeResolved);
     if (!output) return;
     try {
@@ -138,8 +144,16 @@ export function useReview(
       setCopyText(output);
     }
   }
+  async function copy(includeResolved: boolean) {
+    await copyComments(comments, includeResolved);
+  }
+  async function copyCurrent(includeResolved: boolean) {
+    await copyComments(currentComments, includeResolved);
+  }
   return {
     comments,
+    rounds,
+    currentComments,
     feedback,
     setFeedback,
     begin,
@@ -149,6 +163,7 @@ export function useReview(
     toggle,
     remove,
     copy,
+    copyCurrent,
     copyText,
     closeCopy: () => setCopyText(null),
   };

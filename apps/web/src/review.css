@@ -280,6 +280,25 @@
   padding: 0;
   line-height: var(--leading-copy);
 }
+.review-round {
+  margin-bottom: var(--space-4);
+}
+.review-round h2,
+.review-round summary {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+.review-round h2 {
+  margin: 0 0 var(--space-2);
+}
+.earlier-review {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-3);
+}
+.earlier-review summary {
+  cursor: pointer;
+}
 .comment-card,
 .comment-editor {
   color: var(--fg);
