@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { fstatSync } from "node:fs";
 import { parseArgs } from "node:util";
+import { openBrowser } from "./browser.ts";
 import { startServer } from "./server.ts";
 import { readPatchInput } from "./stdin.ts";
 
@@ -15,7 +16,7 @@ try {
   });
   if (values.help) {
     console.log(
-      "Usage: serve-diff [directory | -] [--port 3333] [--dev]\n\nExamples:\n  serve-diff .                 Watch the current repository\n  serve-diff /path/to/repo     Watch another repository\n  git diff | serve-diff       Read a patch from stdin\n  git show | serve-diff       Review a commit\n  serve-diff - < saved.patch  Read a saved patch\n  serve-diff . --port 4000     Use a different port\n\nPiped or redirected input takes priority, even when empty.\nWithout input redirection, provide a directory to watch with Git.\nRequires Node 26. Open the printed URL. Ctrl+C stops the server.",
+      "Usage: serve-diff [directory | -] [--port 3333] [--dev]\n\nExamples:\n  serve-diff .                 Watch the current repository\n  serve-diff /path/to/repo     Watch another repository\n  git diff | serve-diff       Read a patch from stdin\n  git show | serve-diff       Review a commit\n  serve-diff - < saved.patch  Read a saved patch\n  serve-diff . --port 4000     Use a different port\n\nPiped or redirected input takes priority, even when empty.\nWithout input redirection, provide a directory to watch with Git.\nRequires Node 26. Opens your browser automatically on macOS and Linux, except over SSH. Ctrl+C stops the server.",
     );
   } else {
     if (Number(process.versions.node.split(".")[0]) !== 26)
@@ -43,9 +44,11 @@ try {
       dev: values.dev,
       ...(piped ? { input } : {}),
     });
+    const browserError = await openBrowser(server.addresses.localhost);
     console.log(
       `\n  serve-diff\n  Local    ${server.addresses.localhost}\n  All      ${server.addresses.all}\n  Network  ${server.addresses.network ?? "unavailable"}\n  ${piped ? "Piped diff · fixed snapshot" : server.root}\n\n  Press Ctrl+C to stop.\n`,
     );
+    if (browserError) console.warn(`serve-diff: ${browserError}`);
     let closing = false;
     const close = () => {
       if (!closing) {
