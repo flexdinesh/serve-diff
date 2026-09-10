@@ -222,7 +222,7 @@ export function DiffWorkspace() {
           }),
       unsafeCSS: `
         [data-diffs-header] { cursor: pointer; }
-        [data-change-icon="change"] { color: var(--modified); }
+        [data-change-icon="change"] { color: var(--warning); }
         [data-selected-line][data-hovered] {
           --diffs-computed-hovered-line-bg: var(--diffs-computed-selected-line-bg);
         }

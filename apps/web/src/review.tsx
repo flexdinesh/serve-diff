@@ -188,7 +188,7 @@ export function CommentCard({
         </button>
         <button
           type="button"
-          className="quiet-button"
+          className="quiet-button destructive-button"
           onClick={() => onDelete(comment)}
         >
           Delete
@@ -215,8 +215,13 @@ export function CopyDialog({
     return () => node?.close();
   }, []);
   return (
-    <dialog ref={dialog} className="copy-dialog" onCancel={onClose}>
-      <h2>Copy review comments</h2>
+    <dialog
+      ref={dialog}
+      className="copy-dialog"
+      aria-labelledby="copy-dialog-title"
+      onCancel={onClose}
+    >
+      <h2 id="copy-dialog-title">Copy review comments</h2>
       <p>
         Clipboard access is unavailable. Copy the selected text with ⌘C /
         Ctrl+C.

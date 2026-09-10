@@ -5,6 +5,7 @@ import { App } from "./App.tsx";
 import { AppProvider } from "./app-state.tsx";
 import { highlighterOptions, poolOptions } from "./diff-workers.ts";
 import "./typography.css";
+import "./tokens.css";
 import "./style.css";
 import "./review.css";
 
