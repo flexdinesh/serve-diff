@@ -13,6 +13,7 @@ import {
 import { ancestorPaths } from "./file-tree.ts";
 import { readDiffTheme, readLineDiffType } from "./display-options.ts";
 import { save, saved, savedReviews } from "./preferences.ts";
+import { toggleReviewedFileState } from "./review-state.ts";
 import {
   anchored,
   type CommentAnnotation,
@@ -94,10 +95,9 @@ function usePageState() {
     save(reviewKey, JSON.stringify([...entries]));
   }
   function toggleReviewed(file: ChangedFile) {
-    const next = new Map(reviewed);
-    if (isReviewed(file)) next.delete(file.path);
-    else next.set(file.path, file.fingerprint);
-    storeReviews(next);
+    const next = toggleReviewedFileState(reviewed, collapsed, file);
+    setCollapsed(next.collapsed);
+    storeReviews(next.reviews);
   }
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
