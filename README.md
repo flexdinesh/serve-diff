@@ -22,7 +22,8 @@ From any Git repository:
 serve-diff .
 ```
 
-Open one of the printed addresses. Stop with **Ctrl+C**. The network address is
+serve-diff automatically opens the local address in your browser on macOS and
+Linux, except in SSH sessions. Stop with **Ctrl+C**. The network address is
 reachable by other devices on your local network.
 
 ```sh
