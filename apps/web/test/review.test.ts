@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parsePatchFiles } from "@pierre/diffs";
-import type { ChangedFile } from "@serve-diff/shared";
+import type { ChangedFile, RepositoryDiff } from "@serve-diff/shared";
 import { fileKind, gitDecoration } from "../src/file-decoration.ts";
 import { ancestorPaths, buildFileTree } from "../src/file-tree.ts";
 import {
@@ -10,6 +10,7 @@ import {
   formatComments,
   lineContext,
   parseComments,
+  reviewRounds,
   type ReviewComment,
   type ReviewOrigin,
 } from "../src/review-model.ts";
@@ -251,6 +252,42 @@ test("groups comments by snapshot then file while preserving export order", () =
   );
   assert.ok(output.includes('<review origin="unknown">'));
   assert.ok(output.indexOf('id="C1"') < output.indexOf('id="C4"'));
+});
+
+test("separates current comments from earlier review rounds", () => {
+  const repository: RepositoryDiff = {
+    root: "/repo",
+    name: "repo",
+    branch: "main",
+    head: "abc",
+    mode: "staged",
+    revision: "current",
+    files: [file("src/file.ts")],
+  };
+  const oldOrigin: ReviewOrigin = {
+    source: "local",
+    repository: "repo",
+    branch: "main",
+    head: "abc",
+    revision: "earlier",
+    file: { status: "M", oldPath: null },
+  };
+  const currentOrigin: ReviewOrigin = { ...oldOrigin, revision: "current" };
+  const rounds = reviewRounds(
+    [
+      { ...comment, origin: oldOrigin, createdAt: 1 },
+      { ...comment, id: "two", origin: currentOrigin, createdAt: 2 },
+      { ...comment, id: "three", origin: oldOrigin, createdAt: 3 },
+    ],
+    repository,
+  );
+  assert.deepEqual(
+    rounds.map((round) => [round.current, round.comments.map(({ id }) => id)]),
+    [
+      [true, ["two"]],
+      [false, ["one", "three"]],
+    ],
+  );
 });
 
 test("copies rename and status metadata with XML-safe attributes and content", () => {
