@@ -258,7 +258,7 @@ test("reports merge conflicts and detached HEAD", async (t) => {
 test("serves browser assets and validates API paths, versions, modes, hosts, origins, methods", async (t) => {
   const { root, repository, write } = await fixture(t);
   await write("hello.ts", "export const hello = true;\n");
-  const server = await startServer({ directory: root, port: 0 });
+  const server = await startServer({ directory: root, port: 0, dev: true });
   t.after(() => server.close());
   assert.match(server.addresses.localhost, /^http:\/\/localhost:\d+$/);
   assert.match(server.addresses.all, /^http:\/\/0\.0\.0\.0:\d+$/);

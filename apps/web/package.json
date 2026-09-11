@@ -4,7 +4,13 @@
   "license": "apache-2.0",
   "type": "module",
   "scripts": {
-    "build": "vite build"
+    "build": "vite build",
+    "dev": "vite",
+    "test": "pnpm test:unit && pnpm test:browser",
+    "test:unit": "node --test test/*.test.ts",
+    "test:browser": "playwright test",
+    "test:browser:install": "playwright install chromium",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@pierre/diffs": "catalog:",
@@ -13,9 +19,12 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@playwright/test": "catalog:",
+    "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
+    "typescript": "catalog:",
     "vite": "catalog:"
   }
 }

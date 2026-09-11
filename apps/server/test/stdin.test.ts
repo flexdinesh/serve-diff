@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile, spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
@@ -12,14 +12,10 @@ import { openPatch, readPatchInput } from "../src/stdin.ts";
 
 const execute = promisify(execFile);
 const cli = fileURLToPath(new URL("../src/cli.ts", import.meta.url));
-const patch = `diff --git a/src/value.ts b/src/value.ts
-index 1111111..2222222 100644
---- a/src/value.ts
-+++ b/src/value.ts
-@@ -1 +1 @@
--export const value = 1;
-+export const value = 2;
-`;
+const patch = await readFile(
+  fileURLToPath(new URL("../../../test/fixtures/sample.diff", import.meta.url)),
+  "utf8",
+);
 
 async function directory(t: TestContext) {
   const root = await mkdtemp(join(tmpdir(), "serve diff stdin "));
@@ -31,16 +27,18 @@ test("serves parsed patch contents without consulting a Git repository", async (
   const repository = openPatch(patch);
   const data = await repository.snapshot("all");
   assert.equal(data.source, "stdin");
-  assert.equal(data.files.length, 1);
-  const file = data.files[0];
+  assert.equal(data.files.length, 3);
+  const file = data.files.find((entry) => entry.path === "src/value.ts");
   assert.ok(file);
-  assert.equal(file.path, "src/value.ts");
   assert.equal(file.status, "M");
   assert.equal(file.additions, 1);
   assert.equal(file.deletions, 1);
   assert.equal(file.indexStatus, "");
   assert.equal(file.worktreeStatus, "");
-  assert.equal((await repository.patch("all", file, null)).patch, patch);
+  assert.match(
+    (await repository.patch("all", file, null)).patch,
+    /-export const value = 1;\n\+export const value = 2;/,
+  );
   assert.equal(openPatch(patch).root, repository.root);
   assert.notEqual(
     openPatch(patch.replace("value = 2", "value = 3")).root,
@@ -153,7 +151,7 @@ test("reads chunked UTF-8, bounds input, and rejects unsupported output clearly"
   assert.throws(() => openPatch("not a diff"), /No Git patch/);
   assert.throws(() => openPatch("diff --cc file.ts\n"), /Combined merge diffs/);
   assert.throws(
-    () => openPatch(patch.replace("@@ -1 +1 @@", "@@ -20,5 +20,5 @@")),
+    () => openPatch(patch.replace("@@ -1,3 +1,3 @@", "@@ -20,5 +20,5 @@")),
     /./,
   );
   assert.equal((await openPatch("").snapshot("all")).files.length, 0);
@@ -164,7 +162,7 @@ for (const input of [patch, ""]) {
     const root = await directory(t);
     const child = spawn(
       process.execPath,
-      [cli, "/nonexistent/repository", "--port", "0"],
+      [cli, "/nonexistent/repository", "--port", "0", "--dev"],
       {
         cwd: root,
         env: { ...process.env, PATH: "/nonexistent" },
