@@ -51,7 +51,21 @@ Piped or redirected input takes priority over a directory argument; an empty pip
 From this checkout:
 
 ```sh
-pnpm dev /path/to/repo
+pnpm dev:web
+pnpm dev:server
+```
+
+Both development commands use `test/fixtures/sample.diff`. The web workspace
+runs its own Vite fixture API; the server workspace runs the Node CLI with the
+same diff piped to stdin.
+
+Install Chromium once, then test either workspace independently or run every
+check from the root:
+
+```sh
+pnpm test:browser:install
+pnpm --filter @serve-diff/server test
+pnpm --filter @serve-diff/web test
 pnpm check
 ```
 

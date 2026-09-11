@@ -3,9 +3,19 @@
   "private": true,
   "license": "apache-2.0",
   "type": "module",
+  "scripts": {
+    "build": "pnpm typecheck",
+    "dev": "node src/cli.ts --dev - < ../../test/fixtures/sample.diff",
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
   "dependencies": {
     "@pierre/diffs": "catalog:",
     "@serve-diff/shared": "workspace:*",
     "vite": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
   }
 }

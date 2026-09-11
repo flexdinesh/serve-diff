@@ -4,6 +4,7 @@ packages:
 
 catalog:
   "@pierre/diffs": 1.4.1
+  "@playwright/test": 1.63.0
   "@types/node": 26.4.1
   typescript: 7.0.2
   oxfmt: 0.66.0
