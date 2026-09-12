@@ -66,7 +66,7 @@ The global stylesheet maps shadcn/Tailwind theme roles to existing tokens:
 | Popover                  | `--surface-raised`                |
 | Primary / focus ring     | `--accent`                        |
 | Primary foreground       | `--on-accent`                     |
-| Border / input           | `--border` / `--border-strong`    |
+| Border / input           | `--border`                        |
 | Destructive              | `--error`                         |
 | Muted foreground         | `--muted`                         |
 | Radius / typography      | Existing geometry and type tokens |
@@ -86,7 +86,8 @@ measured elements or replace the application tokens with framework defaults.
 | Secondary text                | `--text-secondary` | Supporting prose and available secondary actions                   |
 | Muted text                    | `--muted`          | Paths, counts, captions; still readable, never disabled by default |
 | Separator                     | `--border`         | Pane dividers and low-emphasis grouping                            |
-| Control boundary              | `--border-strong`  | Inputs, outlined buttons, meaningful boundaries                    |
+| Control boundary              | `--border`         | Inputs, outlined buttons, and resting interactive boundaries       |
+| Emphasized boundary           | `--border-strong`  | Rare boundaries requiring emphasis beyond focus or error styling   |
 | Neutral hover                 | `--hover`          | Available controls under the pointer, compact count surfaces       |
 | Accent                        | `--accent`         | Selection, focus, navigation links, primary commit action          |
 | Accent interaction            | `--accent-hover`   | Hover/active on filled primary actions                             |
@@ -94,6 +95,7 @@ measured elements or replace the application tokens with framework defaults.
 | On accent                     | `--on-accent`      | Text on filled accent; never assume white in both themes           |
 | Success                       | `--success`        | Added files/counts, reviewed and resolved state                    |
 | Warning                       | `--warning`        | Modified files, recoverable notices                                |
+| Review anchor                 | `--review-anchor`  | Subtle tint on lines covered by a visible review comment           |
 | Destructive / error           | `--error`          | Deleted files/counts, conflicts, delete actions, errors            |
 
 - Use one foreground hierarchy across both themes. Dark mode maps the same roles;
@@ -196,7 +198,8 @@ such detail into a token. New layout spacing must use the scale.
 - Pierre's header uses the measured row height plus 24px native padding. Keep
   header-slot controls compact; do not apply global touch sizing to these slots.
 - Do not add outer margins, padding, or borders to virtualized `diffs-container`
-  elements. The inset divider draws a boundary without changing measured height.
+  elements. Separate files with a Pierre-measured 8px gap and a subtle full-width
+  divider; keep `itemMetrics` synchronized so virtual scrolling remains correct.
 - Keep `unsafeCSS` small and justified. Do not reconstruct syntax styling or
   broadly target internal shadow-DOM elements to make the library look like chrome.
 - Changing code/header geometry requires validating navigation, sticky headers,
@@ -204,16 +207,18 @@ such detail into a token. New layout spacing must use the scale.
 
 ## Borders, radii, and shadows
 
-- Use 1px `--border` for separation and `--border-strong` when a boundary must
-  identify a control. Do not stack a card border inside another bordered panel
-  unless it represents an independent review object.
+- Use 1px `--border` for separators and resting control boundaries. Reserve
+  `--border-strong` for exceptional emphasis; focus and errors use their semantic
+  tokens. Do not stack a card border inside another bordered panel unless it
+  represents an independent review object.
 - `--radius-sm` (4) is for rows, badges, and compact controls;
-  `--radius-md` (6) for standard controls; `--radius-lg` (8) for comments/dialogs.
-  Circles are reserved for dots and small status marks.
+  `--radius-md` (6) for standard controls; `--radius-lg` (8) for sidebar comments
+  and dialogs. Inline review annotations remain square. Circles are reserved for
+  dots and small status marks.
 - `--shadow-overlay` is the single elevation treatment for drawers/dialogs.
   Use `--backdrop` for modal separation. Whitespace and surface changes do the
   grouping work in the rest of the app.
-- Pierre's inset file divider is a non-geometric separator, not elevation.
+- Pierre's file divider and measured gap are separation, not elevation.
 
 ## Components
 
@@ -224,8 +229,11 @@ such detail into a token. New layout spacing must use the scale.
   action. Add shared semantic variants instead of page-specific size variants.
 - Standard control height is `--control-height` (32). Compact header-slot
   controls use `--control-compact` (24); segmented groups share the 32px outer size.
-- Outlined buttons use strong borders, medium UI text, 12px horizontal padding,
+- Outlined buttons use regular borders, medium UI text, 12px horizontal padding,
   and `--radius-md`. Quiet buttons use secondary text and no resting border.
+- Standard buttons and button-like header statuses use the 32px control height.
+  Compact sizing is reserved for subordinate icon and metadata controls. Shared
+  variants own hover, active, border, and background styling.
 - Filled accent is reserved for the primary action, such as saving a comment.
   Refresh, copy/export, and layout preferences are secondary actions.
 - Icon buttons have accessible names and centered icons; size the hit box
@@ -234,7 +242,7 @@ such detail into a token. New layout spacing must use the scale.
 ### Forms
 
 - Reuse the shared shadcn `Input`, `Select`, and `Textarea` primitives. They use
-  `--bg` or `--panel`, `--border-strong`, and `--radius-md`. Textareas share the
+  `--bg` or `--panel`, `--border`, and `--radius-md`. Textareas share the
   review body style and 8px/12px padding.
 - Label every control. Placeholders are hints, not labels. Keep label-to-control
   spacing at 8px, including the heading above a comment editor.
@@ -245,10 +253,24 @@ such detail into a token. New layout spacing must use the scale.
 
 ### Cards, navigation, and status
 
-- Cards are for review comments and editors, not every section of the app.
-  Use one border, 12px padding, `--radius-lg`, and no shadow.
+- Review comments and editors use the shared shadcn `Card` composition. Inline
+  cards use a complete subtle border, `--radius-md`, generous outer spacing, and
+  no shadow; sidebar cards use `--radius-lg`. Separate card regions with a raised
+  body surface, accent-tinted header, and neutral action row; keep status at the
+  header's trailing edge and use compact labeled icons for state and actions.
+- Comment actions and each file's viewed control use standard button sizing.
+  Comment status badges match the same control height.
+- Resolved comments collapse to their header by default. A labeled chevron
+  expands the body and actions; reopening restores the expanded open state.
+- Tint every old/new diff row covered by a visible comment, including its
+  gutter and multi-line range. Use a stronger green/red tint for addition and
+  deletion rows; reserve `--review-anchor` yellow for unchanged context. Mix
+  each tint with Pierre's existing background instead of replacing it.
 - Navigation uses a quiet background, aligned text/icons, and a clear current
   item. Reviewed files retain readable text and a check; do not fade the entire row.
+- Navigating from the file list briefly pulses the destination file header with
+  the accent for about one second. Reduced-motion mode uses static feedback that
+  remains visible long enough to identify the destination without animation.
 - Sidebar mode buttons use an accent underline. Segmented choices and pressed
   toggles use accent text on `--accent-bg`. Expose state with native/ARIA semantics.
 - Badges use compact text, `--radius-sm`, and neutral surfaces. Status color is

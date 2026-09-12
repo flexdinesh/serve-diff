@@ -17,6 +17,47 @@ import { themesFor } from "./display-options.ts";
 import { DraftComment, ReviewCommentCard } from "./review.tsx";
 import type { CommentAnnotation } from "./review-model.ts";
 
+const NAVIGATION_CUE_MS = 1_000;
+
+type CommentLineRange = {
+  side: "deletions" | "additions";
+  start: number;
+  end: number;
+};
+
+function markCommentedLines(
+  root: ParentNode,
+  ranges: readonly CommentLineRange[],
+) {
+  for (const element of root.querySelectorAll<HTMLElement>(
+    "[data-commented-line]",
+  ))
+    element.removeAttribute("data-commented-line");
+  for (const range of ranges) {
+    const column = root.querySelector<HTMLElement>(
+      `[data-code][data-${range.side}]`,
+    );
+    if (!column) continue;
+    for (const element of column.querySelectorAll<HTMLElement>(
+      "[data-line], [data-column-number]",
+    )) {
+      const value =
+        element.getAttribute("data-line") ??
+        element.getAttribute("data-column-number");
+      const line = Number(value);
+      if (line < range.start || line > range.end) continue;
+      const lineType = element.getAttribute("data-line-type");
+      const tone =
+        lineType === "change-addition"
+          ? "addition"
+          : lineType === "change-deletion"
+            ? "deletion"
+            : "context";
+      element.setAttribute("data-commented-line", tone);
+    }
+  }
+}
+
 function selectionLabel(prefix: string, range: SelectedLineRange | null) {
   if (!range) return "";
   const start = Math.min(range.start, range.end);
@@ -96,7 +137,7 @@ export function DiffWorkspace() {
       collapsed,
       setCollapsed,
     },
-    navigation: { files, filter },
+    navigation: { files, filter, navigationTarget, commentNavigationTarget },
     reviewed: { isReviewed, toggleReviewed },
     draft,
     review,
@@ -201,6 +242,81 @@ export function DiffWorkspace() {
       });
     } else viewer.current?.clearSelectedLines();
   }, [draft, files, mode, viewer]);
+  useEffect(() => {
+    if (!navigationTarget.path) return;
+    let frame = 0;
+    let timeout = 0;
+    let target: HTMLElement | undefined;
+    const deadline = performance.now() + NAVIGATION_CUE_MS;
+    const highlight = () => {
+      const item = viewer.current
+        ?.getInstance()
+        ?.getRenderedItems()
+        .find((rendered) => rendered.id === navigationTarget.path);
+      target =
+        item?.element.shadowRoot?.querySelector<HTMLElement>(
+          "[data-diffs-header]",
+        ) ?? undefined;
+      if (!target) {
+        if (performance.now() < deadline)
+          frame = requestAnimationFrame(highlight);
+        return;
+      }
+      target.setAttribute("data-navigation-target", "");
+      timeout = window.setTimeout(() => {
+        target?.removeAttribute("data-navigation-target");
+      }, NAVIGATION_CUE_MS);
+    };
+    frame = requestAnimationFrame(highlight);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timeout);
+      target?.removeAttribute("data-navigation-target");
+    };
+  }, [navigationTarget, viewer]);
+  useEffect(() => {
+    if (!commentNavigationTarget) return;
+    let frame = 0;
+    let timeout = 0;
+    let targets: HTMLElement[] = [];
+    const deadline = performance.now() + NAVIGATION_CUE_MS;
+    const highlight = () => {
+      const item = viewer.current
+        ?.getInstance()
+        ?.getRenderedItems()
+        .find((rendered) => rendered.id === commentNavigationTarget.path);
+      const column = item?.element.shadowRoot?.querySelector<HTMLElement>(
+        `[data-code][data-${commentNavigationTarget.side}]`,
+      );
+      targets = Array.from(
+        column?.querySelectorAll<HTMLElement>("[data-line]") ?? [],
+      ).filter((element) => {
+        const line = Number(element.getAttribute("data-line"));
+        return (
+          line >= commentNavigationTarget.start &&
+          line <= commentNavigationTarget.end
+        );
+      });
+      if (targets.length === 0) {
+        if (performance.now() < deadline)
+          frame = requestAnimationFrame(highlight);
+        return;
+      }
+      for (const target of targets)
+        target.setAttribute("data-comment-navigation-target", "");
+      timeout = window.setTimeout(() => {
+        for (const target of targets)
+          target.removeAttribute("data-comment-navigation-target");
+      }, NAVIGATION_CUE_MS);
+    };
+    frame = requestAnimationFrame(highlight);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timeout);
+      for (const target of targets)
+        target.removeAttribute("data-comment-navigation-target");
+    };
+  }, [commentNavigationTarget, viewer]);
   const options = useMemo<CodeViewReactOptions<CommentAnnotation, undefined>>(
     () => ({
       theme: themesFor(diffTheme),
@@ -222,10 +338,81 @@ export function DiffWorkspace() {
             },
           }),
       unsafeCSS: `
-        [data-diffs-header] { cursor: pointer; }
+        [data-diffs-header] {
+          cursor: pointer;
+          background: var(--diff-file-header);
+          box-shadow: inset 0 -1px var(--border);
+        }
         [data-change-icon="change"] { color: var(--warning); }
+        [data-diffs-header][data-navigation-target] {
+          animation: navigation-target ${NAVIGATION_CUE_MS}ms ease-out;
+        }
+        @keyframes navigation-target {
+          0%, 35% {
+            background: var(--accent-bg);
+            box-shadow:
+              inset 3px 0 var(--accent),
+              inset 0 -1px var(--border);
+          }
+          100% {
+            background: var(--diff-file-header);
+            box-shadow:
+              inset 0 0 transparent,
+              inset 0 -1px var(--border);
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [data-diffs-header][data-navigation-target] {
+            animation: none;
+            background: var(--accent-bg);
+            box-shadow:
+              inset 3px 0 var(--accent),
+              inset 0 -1px var(--border);
+          }
+        }
         [data-selected-line][data-hovered] {
           --diffs-computed-hovered-line-bg: var(--diffs-computed-selected-line-bg);
+        }
+        [data-commented-line="context"] {
+          --diffs-line-bg: color-mix(
+            in srgb,
+            var(--diffs-computed-diff-line-bg) 84%,
+            var(--review-anchor)
+          );
+        }
+        [data-commented-line="addition"] {
+          --diffs-line-bg: color-mix(
+            in srgb,
+            var(--diffs-computed-diff-line-bg) 76%,
+            color-mix(in srgb, var(--diffs-addition-base) 72%, black)
+          );
+        }
+        [data-commented-line="deletion"] {
+          --diffs-line-bg: color-mix(
+            in srgb,
+            var(--diffs-computed-diff-line-bg) 76%,
+            color-mix(in srgb, var(--diffs-deletion-base) 72%, black)
+          );
+        }
+        [data-comment-navigation-target] {
+          animation: comment-navigation-target ${NAVIGATION_CUE_MS}ms ease-out;
+        }
+        @keyframes comment-navigation-target {
+          0%, 40% {
+            box-shadow: inset 3px 0 var(--accent);
+            filter: saturate(1.25) brightness(0.92);
+          }
+          100% {
+            box-shadow: inset 0 0 transparent;
+            filter: none;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [data-comment-navigation-target] {
+            animation: none;
+            box-shadow: inset 3px 0 var(--accent);
+            filter: saturate(1.25) brightness(0.92);
+          }
         }
       `,
       stickyHeaders: true,
@@ -237,7 +424,21 @@ export function DiffWorkspace() {
           }),
       enableGutterUtility: true,
       lineHoverHighlight: "both",
-      layout: { paddingTop: 0, paddingBottom: 24, gap: 1 },
+      layout: { paddingTop: 0, paddingBottom: 24, gap: 8 },
+      onPostRender(node, _instance, phase, context) {
+        if (phase === "unmount" || context.item.type !== "diff") return;
+        const currentDraft = actions.current.draft;
+        const ranges = (context.item.annotations ?? []).flatMap(
+          (annotation): CommentLineRange[] => {
+            if (annotation.metadata.kind === "saved")
+              return [annotation.metadata.comment];
+            return currentDraft && currentDraft.path === context.item.id
+              ? [currentDraft]
+              : [];
+          },
+        );
+        markCommentedLines(node.shadowRoot ?? node, ranges);
+      },
       onGutterUtilityClick(range, context) {
         if (context.item.type !== "diff") return;
         const current = actions.current;
@@ -370,7 +571,6 @@ export function DiffWorkspace() {
                   type="button"
                   className="review-button"
                   variant="outline"
-                  size="xs"
                   aria-label={`Mark ${file.path} ${isReviewed(file) ? "unreviewed" : "reviewed"}`}
                   aria-pressed={isReviewed(file)}
                   onClick={() => toggleReviewed(file)}

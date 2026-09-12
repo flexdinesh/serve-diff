@@ -1,7 +1,27 @@
 import type { RepositoryDiff } from "@serve-diff/shared";
-import { useEffect, useRef } from "react";
+import {
+  CheckCircle2Icon,
+  ChevronDownIcon,
+  CircleDotIcon,
+  MessageSquareIcon,
+  MessageSquarePlusIcon,
+  PencilIcon,
+  RotateCcwIcon,
+  SendIcon,
+  Trash2Icon,
+  XIcon,
+} from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -40,13 +60,19 @@ export function ReviewCommentCard({
 }) {
   const {
     source: { repository },
+    display: { layout },
     review,
     navigateComment,
   } = useAppState();
+  const file = repository?.files.find((file) => file.path === comment.path);
+  const oneSided =
+    file?.status === "A" || file?.status === "D" || file?.status === "?";
   return (
     <CommentCard
       comment={comment}
       sidebar={sidebar}
+      layout={layout}
+      oneSided={oneSided}
       repository={repository}
       onNavigate={navigateComment}
       onEdit={(comment) => {
@@ -78,41 +104,54 @@ export function CommentEditor({
   }, [id]);
   return (
     <form
-      className="comment-editor"
+      className="comment-editor-form"
       onSubmit={(event) => {
         event.preventDefault();
         onSave();
       }}
     >
-      <strong>Comment on {location(draft)}</strong>
-      <Textarea
-        ref={input}
-        placeholder="Leave a review comment…"
-        aria-label="Review comment"
-        rows={3}
-        value={draft.body}
-        onChange={(event) => onChange(event.target.value)}
-        onKeyDown={(event) => {
-          event.stopPropagation();
-          if (event.key === "Escape") {
-            event.preventDefault();
-            onCancel();
-          }
-          if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-            event.preventDefault();
-            onSave();
-          }
-        }}
-      />
-      <div className="comment-actions">
-        <span>⌘ / Ctrl + Enter to save</span>
-        <Button type="button" variant="ghost" size="xs" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={!draft.body.trim()}>
-          Save comment
-        </Button>
-      </div>
+      <Card size="sm" className="comment-editor">
+        <CardHeader className="comment-editor-header">
+          <CardTitle className="comment-editor-title">
+            <MessageSquarePlusIcon aria-hidden="true" />
+            <span>
+              New comment <small>· {location(draft)}</small>
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="comment-editor-content">
+          <Textarea
+            ref={input}
+            placeholder="Leave a review comment…"
+            aria-label="Review comment"
+            rows={3}
+            value={draft.body}
+            onChange={(event) => onChange(event.target.value)}
+            onKeyDown={(event) => {
+              event.stopPropagation();
+              if (event.key === "Escape") {
+                event.preventDefault();
+                onCancel();
+              }
+              if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                onSave();
+              }
+            }}
+          />
+        </CardContent>
+        <CardFooter className="comment-actions">
+          <span>⌘ / Ctrl + Enter to save</span>
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            <XIcon aria-hidden="true" />
+            Cancel
+          </Button>
+          <Button type="submit" disabled={!draft.body.trim()}>
+            <SendIcon aria-hidden="true" />
+            Save comment
+          </Button>
+        </CardFooter>
+      </Card>
     </form>
   );
 }
@@ -120,6 +159,8 @@ export function CommentEditor({
 export function CommentCard({
   comment,
   sidebar = false,
+  layout,
+  oneSided,
   repository,
   onNavigate,
   onEdit,
@@ -128,82 +169,134 @@ export function CommentCard({
 }: {
   comment: ReviewComment;
   sidebar?: boolean;
+  layout: "split" | "unified";
+  oneSided: boolean;
   repository: RepositoryDiff | null;
   onNavigate: (comment: ReviewComment) => void;
   onEdit: (comment: ReviewComment) => void;
   onToggle: (comment: ReviewComment) => void;
   onDelete: (comment: ReviewComment) => void;
 }) {
+  const resolved = comment.status === "resolved";
+  const [expanded, setExpanded] = useState(!resolved);
+  const contentId = useId();
+  useEffect(() => setExpanded(!resolved), [comment.id, resolved]);
   return (
-    <article
-      className={`comment-card${comment.status === "resolved" ? " resolved" : ""}`}
-      data-comment-id={comment.id}
-    >
-      <div className="comment-card-header">
-        {sidebar ? (
+    <article data-comment-id={comment.id}>
+      <Card
+        size="sm"
+        className={`comment-card${resolved ? " resolved" : ""}`}
+        data-expanded={expanded}
+        data-diff-layout={sidebar ? undefined : layout}
+        data-one-sided={!sidebar && oneSided ? "" : undefined}
+      >
+        <CardHeader className="comment-card-header">
           <Button
             type="button"
-            className="comment-location"
+            className="comment-collapse"
             variant="ghost"
-            size="xs"
-            title={location(comment)}
-            onClick={() => onNavigate(comment)}
+            size="icon-xs"
+            aria-controls={contentId}
+            aria-expanded={expanded}
+            aria-label={`${expanded ? "Collapse" : "Expand"} ${resolved ? "resolved " : ""}comment at ${location(comment)}`}
+            onClick={() => setExpanded((current) => !current)}
           >
-            {location(comment)}
+            <ChevronDownIcon aria-hidden="true" />
           </Button>
-        ) : (
-          <span>
-            Review · {comment.side === "additions" ? "new" : "old"} line{" "}
-            {comment.start}
-            {comment.end !== comment.start ? `–${comment.end}` : ""}
-          </span>
-        )}
-        <Badge variant="outline" className="comment-state">
-          {comment.status === "resolved" ? "Resolved" : "Open"}
-        </Badge>
-      </div>
-      <p className="comment-body">{comment.body}</p>
-      {sidebar && (
-        <>
-          {!anchored(comment, repository) && (
-            <p className="comment-outdated">
-              {comment.scope !== repository?.mode
-                ? `From ${comment.scope} changes`
-                : "Earlier diff — original code preserved"}
-            </p>
-          )}
-          <details>
-            <summary>Code context</summary>
-            <pre>{comment.code}</pre>
-          </details>
-        </>
-      )}
-      <div className="comment-actions">
-        <Button
-          type="button"
-          variant="ghost"
-          size="xs"
-          onClick={() => onEdit(comment)}
+          <CardTitle className="comment-card-title">
+            {sidebar ? (
+              <Button
+                type="button"
+                className="comment-location"
+                variant="ghost"
+                size="xs"
+                title={location(comment)}
+                onClick={() => onNavigate(comment)}
+              >
+                <MessageSquareIcon aria-hidden="true" />
+                {location(comment)}
+              </Button>
+            ) : (
+              <>
+                <MessageSquareIcon aria-hidden="true" />
+                <strong>Review comment</strong>
+                <span>
+                  · {comment.side === "additions" ? "new" : "old"} line{" "}
+                  {comment.start}
+                  {comment.end !== comment.start ? `–${comment.end}` : ""}
+                </span>
+              </>
+            )}
+          </CardTitle>
+          <CardAction>
+            <Badge variant="outline" className="comment-state">
+              {resolved ? (
+                <CheckCircle2Icon aria-hidden="true" />
+              ) : (
+                <CircleDotIcon aria-hidden="true" />
+              )}
+              {resolved ? "Resolved" : "Open"}
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <div
+          id={contentId}
+          className="comment-collapse-panel"
+          hidden={!expanded}
         >
-          Edit
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="xs"
-          onClick={() => onToggle(comment)}
-        >
-          {comment.status === "resolved" ? "Reopen" : "Resolve"}
-        </Button>
-        <Button
-          type="button"
-          variant="destructive"
-          size="xs"
-          onClick={() => onDelete(comment)}
-        >
-          Delete
-        </Button>
-      </div>
+          <CardContent className="comment-card-content">
+            <p className="comment-body">{comment.body}</p>
+            {sidebar && (
+              <>
+                {!anchored(comment, repository) && (
+                  <p className="comment-outdated">
+                    {comment.scope !== repository?.mode
+                      ? `From ${comment.scope} changes`
+                      : "Earlier diff — original code preserved"}
+                  </p>
+                )}
+                <details>
+                  <summary>Code context</summary>
+                  <pre>{comment.code}</pre>
+                </details>
+              </>
+            )}
+          </CardContent>
+          <CardFooter className="comment-actions">
+            <Button
+              type="button"
+              variant="ghost"
+              size={sidebar ? "xs" : "default"}
+              onClick={() => onEdit(comment)}
+            >
+              <PencilIcon aria-hidden="true" />
+              Edit
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size={sidebar ? "xs" : "default"}
+              onClick={() => onToggle(comment)}
+            >
+              {resolved ? (
+                <RotateCcwIcon aria-hidden="true" />
+              ) : (
+                <CheckCircle2Icon aria-hidden="true" />
+              )}
+              {resolved ? "Reopen" : "Resolve"}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size={sidebar ? "xs" : "default"}
+              onClick={() => onDelete(comment)}
+            >
+              <Trash2Icon aria-hidden="true" />
+              Delete
+            </Button>
+          </CardFooter>
+        </div>
+      </Card>
     </article>
   );
 }

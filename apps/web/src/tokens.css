@@ -9,12 +9,14 @@
   --border: #e5e7ec;
   --border-strong: #878c98;
   --hover: #eeeef4;
+  --diff-file-header: var(--panel);
   --accent: #5957d2;
   --accent-hover: #514fc5;
   --accent-bg: #eeeeff;
   --on-accent: #fff;
   --success: #247446;
   --warning: #85620f;
+  --review-anchor: #d5a910;
   --error: #b73840;
   --brand-bg: #facc15;
   --on-brand: #000;
@@ -69,6 +71,7 @@
   --on-accent: #151619;
   --success: #70cc95;
   --warning: #dfbd68;
+  --review-anchor: #ffd452;
   --error: #ed8a8e;
   --file-code: #75b9f2;
   --file-data: #dfbd68;

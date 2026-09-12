@@ -15,7 +15,7 @@ const file: ChangedFile = {
   fingerprint: "revision",
 };
 
-test("marking a file viewed collapses it and unviewing leaves it collapsed", () => {
+test("marking a file viewed collapses it and unviewing expands it", () => {
   const viewed = toggleReviewedFileState(new Map(), new Set(), file);
   assert.equal(viewed.reviews.get(file.path), file.fingerprint);
   assert.deepEqual(viewed.collapsed, new Set([file.path]));
@@ -26,5 +26,5 @@ test("marking a file viewed collapses it and unviewing leaves it collapsed", () 
     file,
   );
   assert.equal(unviewed.reviews.has(file.path), false);
-  assert.deepEqual(unviewed.collapsed, new Set([file.path]));
+  assert.deepEqual(unviewed.collapsed, new Set());
 });

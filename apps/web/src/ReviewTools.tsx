@@ -21,6 +21,7 @@ export function ReviewTools() {
   const unresolved = review.currentComments.filter(
     (comment) => comment.status === "open",
   ).length;
+  const reviewedCount = allFiles.filter(isReviewed).length;
   return (
     <section className="review-tools" aria-label="Review tools">
       <Button
@@ -108,17 +109,18 @@ export function ReviewTools() {
           </div>
           <div className="review-progress">
             <span id="review-count">
-              {allFiles.filter(isReviewed).length} of {allFiles.length} reviewed
+              {reviewedCount} of {allFiles.length} reviewed
             </span>
             <Button
               type="button"
               id="reset-reviewed"
-              variant="ghost"
+              variant="outline"
               size="xs"
-              title="Clear reviewed files"
+              disabled={reviewedCount === 0}
+              title="Clear all viewed files"
               onClick={resetReviewed}
             >
-              Reset
+              Reset viewed
             </Button>
           </div>
         </div>

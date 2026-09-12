@@ -9,6 +9,8 @@
   color: var(--fg);
   background: var(--bg);
   font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 * {
@@ -21,33 +23,14 @@ body {
   font-size: var(--text-base);
   line-height: var(--leading-ui);
 }
-button,
 input,
 select,
 textarea {
   font: inherit;
 }
-button {
-  cursor: pointer;
-  color: inherit;
-}
-button:disabled {
-  cursor: default;
-  opacity: 0.6;
-}
 :focus-visible {
   outline: var(--focus-ring);
   outline-offset: var(--focus-offset);
-}
-button {
-  border: 0;
-  background: none;
-}
-button:where(:not(:disabled)):hover {
-  background: var(--hover);
-}
-button:where(:not(:disabled)):active {
-  background: var(--accent-bg);
 }
 button[aria-busy="true"] {
   cursor: progress;
@@ -110,19 +93,14 @@ kbd {
   width: var(--space-8);
   height: var(--space-8);
   border-radius: var(--radius-md);
-  background: var(--brand-bg);
+  background: transparent;
   color: var(--on-brand);
   font-size: var(--symbol-brand);
-}
-.brand-mark svg {
-  width: 1em;
-  height: 1em;
-  stroke-width: 2;
-  stroke-linecap: round;
 }
 .header-divider {
   width: 1px;
   height: var(--space-6);
+  align-self: center;
   background: var(--border);
   flex-shrink: 0;
 }
@@ -181,6 +159,11 @@ kbd {
   font-size: var(--text-sm);
   white-space: nowrap;
 }
+.branch-badge,
+.local-badge {
+  height: var(--control-height);
+  padding-inline: var(--space-3);
+}
 .local-badge span,
 .live-dot {
   width: 6px;
@@ -227,7 +210,7 @@ kbd {
   margin: 0 var(--space-4) var(--space-3);
   min-height: var(--control-height);
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--bg);
   color: var(--muted);
@@ -265,6 +248,12 @@ kbd {
   white-space: pre;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.tree-folder[data-slot="button"][aria-expanded="true"] {
+  background: transparent;
+}
+.tree-folder[data-slot="button"][aria-expanded="true"]:hover {
+  background: var(--hover);
 }
 .file-row {
   display: flex;
@@ -354,13 +343,6 @@ kbd {
   color: var(--muted);
   margin-bottom: var(--space-4);
 }
-.review-progress button {
-  font-size: var(--text-xs);
-  color: var(--muted);
-  border-radius: var(--radius-sm);
-  padding: var(--space-1);
-  min-height: var(--control-compact);
-}
 .sidebar-footer {
   display: flex;
   flex-shrink: 0;
@@ -380,9 +362,6 @@ main {
   min-width: 0;
   display: flex;
   flex-direction: column;
-}
-.review-button:hover {
-  background: var(--hover);
 }
 .topbar > button,
 .topbar > .brand {
@@ -456,6 +435,7 @@ main {
   overflow: hidden;
   overflow-anchor: none;
   contain: strict;
+  background: var(--bg);
   --diffs-font-family: var(--font-mono);
   --diffs-font-size: var(--text-base);
   --diffs-line-height: calc(var(--text-base) * var(--leading-code));
@@ -468,7 +448,7 @@ main {
   height: var(--diffs-line-height);
 }
 diffs-container {
-  /* Draw the divider without adding untracked height to virtualized files. */
+  /* Pair Pierre's measured gap with a non-geometric file-end rule. */
   box-shadow: inset 0 -1px var(--border);
 }
 .diff-collapse {
@@ -491,16 +471,7 @@ diffs-container {
   stroke-linejoin: round;
 }
 .review-button {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
   color: var(--muted);
-  border: 1px solid var(--border-strong);
-  background: var(--bg);
-  border-radius: var(--radius-sm);
-  font: var(--text-sm) / var(--leading-ui) var(--font-sans);
-  min-height: var(--control-compact);
-  padding: 0 var(--space-2);
 }
 .review-button[aria-pressed="true"] {
   color: var(--success);
@@ -636,7 +607,7 @@ h2 {
   --color-accent-foreground: var(--accent);
   --color-destructive: var(--error);
   --color-border: var(--border);
-  --color-input: var(--border-strong);
+  --color-input: var(--border);
   --color-ring: var(--accent);
   --color-success: var(--success);
   --color-warning: var(--warning);

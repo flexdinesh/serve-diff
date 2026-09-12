@@ -21,7 +21,7 @@ const buttonVariants = cva(
       },
       size: {
         default:
-          "min-h-[var(--control-height)] gap-[var(--space-2)] px-[var(--space-3)] py-[var(--space-1)]",
+          "h-[var(--control-height)] gap-[var(--space-2)] px-[var(--space-3)]",
         xs: "h-[var(--control-compact)] gap-[var(--space-1)] rounded-[var(--radius-sm)] px-[var(--space-2)] text-[length:var(--text-sm)] [&_svg:not([class*='size-'])]:size-3",
         sm: "h-7 gap-[var(--space-1)] px-[var(--space-2)] text-[length:var(--text-sm)] [&_svg:not([class*='size-'])]:size-3.5",
         lg: "h-9 gap-[var(--space-2)] px-[var(--space-3)]",

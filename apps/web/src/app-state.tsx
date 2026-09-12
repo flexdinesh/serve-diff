@@ -59,6 +59,17 @@ function usePageState() {
   const [tab, setTab] = useState<"files" | "comments">("files");
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState("");
+  const [navigationTarget, setNavigationTarget] = useState({
+    path: "",
+    sequence: 0,
+  });
+  const [commentNavigationTarget, setCommentNavigationTarget] = useState<{
+    path: string;
+    side: ReviewComment["side"];
+    start: number;
+    end: number;
+    sequence: number;
+  } | null>(null);
   const [collapsed, setCollapsed] = useState(new Set<string>());
   const [closed, setClosed] = useState(new Set<string>());
   const [filteredClosed, setFilteredClosed] = useState(new Set<string>());
@@ -139,7 +150,7 @@ function usePageState() {
     document.title = `serve-diff · ${piped ? "Piped diff" : "Local diff"}`;
   }, [piped]);
 
-  const selectFile = useCallback(
+  const revealFile = useCallback(
     (path: string) => {
       setSelected(path);
       const expandParents = (previous: Set<string>) => {
@@ -159,12 +170,6 @@ function usePageState() {
       });
       sidebar.closeMobile();
       requestAnimationFrame(() => {
-        viewer.current?.scrollTo({
-          type: "item",
-          id: path,
-          align: "start",
-          behavior: "instant",
-        });
         document
           .querySelector<HTMLElement>(
             `#file-tree .file-row[data-path="${CSS.escape(path)}"]`,
@@ -173,6 +178,24 @@ function usePageState() {
       });
     },
     [sidebar.closeMobile],
+  );
+  const selectFile = useCallback(
+    (path: string) => {
+      revealFile(path);
+      setNavigationTarget((previous) => ({
+        path,
+        sequence: previous.sequence + 1,
+      }));
+      requestAnimationFrame(() => {
+        viewer.current?.scrollTo({
+          type: "item",
+          id: path,
+          align: "start",
+          behavior: "instant",
+        });
+      });
+    },
+    [revealFile],
   );
   function changeMode(value: DiffMode) {
     if (value === mode || piped) return;
@@ -195,7 +218,6 @@ function usePageState() {
     }
     setFilter("");
     setPendingComment(comment);
-    selectFile(comment.path);
   }
   // Navigate only after the requested scope and its parsed previews are installed.
   useEffect(() => {
@@ -207,14 +229,25 @@ function usePageState() {
       return;
     if (anchored(pendingComment, repository)) {
       setFilter("");
-      selectFile(pendingComment.path);
+      revealFile(pendingComment.path);
+      setCommentNavigationTarget((previous) => ({
+        path: pendingComment.path,
+        side: pendingComment.side,
+        start: pendingComment.start,
+        end: pendingComment.end,
+        sequence: (previous?.sequence ?? 0) + 1,
+      }));
       const frame = requestAnimationFrame(() => {
         viewer.current?.scrollTo({
-          type: "line",
+          type: "range",
           id: pendingComment.path,
-          lineNumber: pendingComment.end,
-          side: pendingComment.side,
+          range: {
+            start: pendingComment.start,
+            end: pendingComment.end,
+            side: pendingComment.side,
+          },
           align: "center",
+          behavior: "instant",
         });
         setPendingComment(null);
       });
@@ -222,7 +255,7 @@ function usePageState() {
     }
     setTab("comments");
     setPendingComment(null);
-  }, [pendingComment, diff.busy, repository, selectFile]);
+  }, [pendingComment, diff.busy, repository, revealFile]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -291,6 +324,8 @@ function usePageState() {
       setFilter,
       files,
       activePath,
+      navigationTarget,
+      commentNavigationTarget,
       closed,
       setClosed,
       filteredClosed,
@@ -301,7 +336,10 @@ function usePageState() {
     reviewed: {
       isReviewed,
       toggleReviewed,
-      resetReviewed: () => storeReviews(new Map()),
+      resetReviewed: () => {
+        storeReviews(new Map());
+        setCollapsed(new Set());
+      },
     },
     draft,
     setDraft,
