@@ -35,7 +35,7 @@ serve-diff /path/to/repo      # another repository
 serve-diff . --port 4000      # different port
 ```
 
-Subdirectories resolve to the repository root. Switch between all, staged, and unstaged changes; edits refresh automatically. Use the file tree to navigate and **+** beside a line to comment. **Copy unresolved** or **Copy all** exports agent-ready XML with instructions, short comment IDs, captured code context, and review provenance. Comments stay in your browser. The viewer never changes your Git files or index.
+Subdirectories resolve to the repository root. Switch between all, staged, and unstaged changes; edits refresh automatically. Use the file tree to navigate and **+** beside a line to comment. **Copy unresolved** or **Copy all** exports agent-ready XML with instructions, short comment IDs, captured code context, and review provenance. Comments and reviewed-file marks persist through the local server; display preferences stay in your browser. The viewer never changes your Git files or index.
 
 Or pipe Git output directly:
 
@@ -59,8 +59,8 @@ pnpm dev:server
 ```
 
 Both development commands use `test/fixtures/sample.diff`. The web workspace
-runs its own Vite fixture API; the server workspace runs the Node CLI with the
-same diff piped to stdin.
+runs the production API handler with an in-memory fixture store; the server
+workspace runs the Node CLI with the same diff piped to stdin.
 
 Install Chromium once, then test either workspace independently or run every
 check from the root:
@@ -80,4 +80,19 @@ theme roles by the global stylesheet. Reuse repository-owned primitives in
 `apps/web/src/components/ui`; reserve authored CSS for specialized layout,
 dynamic geometry, and Pierre's measured rendering boundary.
 
-`App.tsx` composes the page sections. `app-state.tsx` owns shared state through `AppProvider`; `DiffWorkspace.tsx` owns Pierre rendering, and `use-review.ts` handles comment persistence. Section-only state stays with its component.
+`App.tsx` composes the page sections. `app-state.tsx` owns shared state through
+`AppProvider`; `DiffWorkspace.tsx` owns Pierre rendering, and `use-review.ts`
+uses the generated REST client. Section-only state stays with its component.
+
+## API
+
+The server prints a per-run API token and includes it in browser URLs as a URL
+fragment. REST clients send it as `Authorization: Bearer <token>`. The OpenAPI
+3.1 contract is available at `/openapi.yaml`; regenerate the TypeScript client
+after contract changes with `pnpm generate:api`.
+
+The versioned API exposes the active source, current diff snapshots, file
+patches and contents, comment CRUD/export, and reviewed-file marks under
+`/api/v1`. Piped input supports only the `all` scope and remains immutable.
+Comments persist by source under `$XDG_STATE_HOME/serve-diff/reviews` (or
+`~/.local/state/serve-diff/reviews`).

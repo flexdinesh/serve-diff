@@ -21,6 +21,7 @@ import {
 
 function file(path: string): ChangedFile {
   return {
+    id: path,
     path,
     oldPath: null,
     status: "M",
@@ -271,6 +272,7 @@ test("groups comments by snapshot then file while preserving export order", () =
 
 test("separates current comments from earlier review rounds", () => {
   const repository: RepositoryDiff = {
+    source: "local",
     root: "/repo",
     name: "repo",
     branch: "main",

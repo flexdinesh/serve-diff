@@ -1,4 +1,5 @@
 import type { CodeViewHandle } from "@pierre/diffs/react";
+import { api, errorDetail } from "@serve-diff/api";
 import type { ChangedFile, DiffMode } from "@serve-diff/shared";
 import {
   createContext,
@@ -12,8 +13,7 @@ import {
 } from "react";
 import { ancestorPaths, filesInTreeOrder } from "./file-tree.ts";
 import { readDiffTheme, readLineDiffType } from "./display-options.ts";
-import { save, saved, savedReviews } from "./preferences.ts";
-import { toggleReviewedFileState } from "./review-state.ts";
+import { removeSaved, save, saved, savedReviews } from "./preferences.ts";
 import {
   readThemePreference,
   resolveTheme,
@@ -113,17 +113,99 @@ function usePageState() {
     ? selected
     : (files[0]?.path ?? "");
   const isReviewed = useCallback(
-    (file: ChangedFile) => reviewed.get(file.path) === file.fingerprint,
+    (file: ChangedFile) => reviewed.get(file.id) === file.fingerprint,
     [reviewed],
   );
-  function storeReviews(entries: Map<string, string>) {
-    setReviewedState({ key: reviewKey, entries });
-    save(reviewKey, JSON.stringify([...entries]));
-  }
-  function toggleReviewed(file: ChangedFile) {
-    const next = toggleReviewedFileState(reviewed, collapsed, file);
-    setCollapsed(next.collapsed);
-    storeReviews(next.reviews);
+  useEffect(() => {
+    if (!repository || repository.mode !== mode) return;
+    const currentRepository = repository;
+    let disposed = false;
+    const legacy = savedReviews(reviewKey);
+    async function load() {
+      try {
+        const imported = currentRepository.files.filter(
+          (file) => legacy.get(file.path) === file.fingerprint,
+        );
+        for (const file of imported) {
+          const { error } = await api.PUT("/api/v1/review-marks/{fileId}", {
+            params: {
+              path: { fileId: file.id },
+              query: { scope: mode },
+            },
+            body: { fileVersion: file.fingerprint },
+          });
+          if (error) {
+            review.setFeedback(
+              errorDetail(error, "Unable to import reviewed files"),
+            );
+            return;
+          }
+        }
+        const { data, error } = await api.GET("/api/v1/review-marks", {
+          params: { query: { scope: mode } },
+        });
+        if (disposed) return;
+        if (!data) {
+          review.setFeedback(
+            errorDetail(error, "Unable to load reviewed files"),
+          );
+          return;
+        }
+        if (legacy.size) removeSaved(reviewKey);
+        setReviewedState({
+          key: reviewKey,
+          entries: new Map(
+            data.marks.map((mark) => [mark.fileId, mark.fileVersion]),
+          ),
+        });
+      } catch (error) {
+        if (!disposed)
+          review.setFeedback(
+            errorDetail(error, "Unable to load reviewed files"),
+          );
+      }
+    }
+    void load();
+    return () => {
+      disposed = true;
+    };
+  }, [repository, reviewKey, mode]);
+  async function toggleReviewed(file: ChangedFile) {
+    try {
+      const marked = reviewed.get(file.id) === file.fingerprint;
+      const result = marked
+        ? await api.DELETE("/api/v1/review-marks/{fileId}", {
+            params: {
+              path: { fileId: file.id },
+              query: { scope: mode },
+            },
+          })
+        : await api.PUT("/api/v1/review-marks/{fileId}", {
+            params: {
+              path: { fileId: file.id },
+              query: { scope: mode },
+            },
+            body: { fileVersion: file.fingerprint },
+          });
+      if (!result.response.ok) {
+        review.setFeedback(
+          errorDetail(result.error, "Unable to update reviewed file"),
+        );
+        return;
+      }
+      const entries = new Map(reviewed);
+      if (marked) entries.delete(file.id);
+      else entries.set(file.id, file.fingerprint);
+      setReviewedState({ key: reviewKey, entries });
+      setCollapsed((current) => {
+        const next = new Set(current);
+        if (marked) next.delete(file.path);
+        else next.add(file.path);
+        return next;
+      });
+    } catch (error) {
+      review.setFeedback(errorDetail(error, "Unable to update reviewed file"));
+    }
   }
   useEffect(() => {
     const query = window.matchMedia("(prefers-color-scheme: dark)");
@@ -350,8 +432,25 @@ function usePageState() {
       isReviewed,
       toggleReviewed,
       resetReviewed: () => {
-        storeReviews(new Map());
-        setCollapsed(new Set());
+        void api
+          .DELETE("/api/v1/review-marks", {
+            params: { query: { scope: mode } },
+          })
+          .then(({ response, error }) => {
+            if (!response.ok) {
+              review.setFeedback(
+                errorDetail(error, "Unable to reset reviewed files"),
+              );
+              return;
+            }
+            setReviewedState({ key: reviewKey, entries: new Map() });
+            setCollapsed(new Set());
+          })
+          .catch((error: unknown) => {
+            review.setFeedback(
+              errorDetail(error, "Unable to reset reviewed files"),
+            );
+          });
       },
     },
     draft,

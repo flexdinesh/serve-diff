@@ -177,37 +177,47 @@ for (const input of [patch, ""]) {
     child.stderr.on("data", (chunk) => {
       stderr += String(chunk);
     });
-    const ready = new Promise<string>((resolve, reject) => {
-      let output = "";
-      const timeout = setTimeout(
-        () => reject(new Error(`CLI did not start: ${stderr}`)),
-        10_000,
-      );
-      child.once("error", (error) => {
-        clearTimeout(timeout);
-        reject(error);
-      });
-      child.once("exit", () => {
-        clearTimeout(timeout);
-        reject(new Error(stderr));
-      });
-      child.stdout.on("data", (chunk) => {
-        output += String(chunk);
-        const url = /http:\/\/localhost:\d+/.exec(output)?.[0];
-        if (url) {
+    const ready = new Promise<{ url: string; token: string }>(
+      (resolve, reject) => {
+        let output = "";
+        const timeout = setTimeout(
+          () => reject(new Error(`CLI did not start: ${stderr}`)),
+          10_000,
+        );
+        child.once("error", (error) => {
           clearTimeout(timeout);
-          resolve(url);
-        }
-      });
-    });
+          reject(error);
+        });
+        child.once("exit", () => {
+          clearTimeout(timeout);
+          reject(new Error(stderr));
+        });
+        child.stdout.on("data", (chunk) => {
+          output += String(chunk);
+          const url = /http:\/\/localhost:\d+/.exec(output)?.[0];
+          const token = /API token\s+([a-f\d]+)/.exec(output)?.[1];
+          if (url && token) {
+            clearTimeout(timeout);
+            resolve({ url, token });
+          }
+        });
+      },
+    );
     child.stdin.end(input);
-    const url = await ready;
+    const { url, token } = await ready;
+    const authorized = { headers: { Authorization: `Bearer ${token}` } };
     assert.equal((await fetch(url)).status, 200);
-    const data = await (await fetch(`${url}/api/diff`)).text();
+    const data = await (
+      await fetch(`${url}/api/v1/diffs/current?scope=all`, authorized)
+    ).text();
     assert.match(data, /"source":"stdin"/);
     if (input) assert.match(data, /src\/value.ts/);
     else assert.match(data, /"files":\[\]/);
-    assert.equal((await fetch(`${url}/api/diff?mode=staged`)).status, 400);
+    assert.equal(
+      (await fetch(`${url}/api/v1/diffs/current?scope=staged`, authorized))
+        .status,
+      400,
+    );
     const stopped = once(child, "exit");
     child.kill("SIGINT");
     assert.deepEqual(await stopped, [0, null]);

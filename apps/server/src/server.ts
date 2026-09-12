@@ -1,15 +1,15 @@
+import { createHash, randomBytes } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { networkInterfaces } from "node:os";
 import { extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  type DiffMode,
-  isDiffMode,
-  type RepositoryDiff,
-} from "@serve-diff/shared";
-import { openRepository, RequestError } from "./git.ts";
+import type { DiffMode, RepositoryDiff } from "@serve-diff/shared";
+import { handleApi, respondWithProblem } from "./api.ts";
+import { openRepository } from "./git.ts";
+import { defaultReviewPath, ReviewStore } from "./review-store.ts";
+import { RequestError } from "./source.ts";
 import { openPatch } from "./stdin.ts";
 
 const webRoot = fileURLToPath(new URL("../../web/", import.meta.url));
@@ -38,11 +38,18 @@ export async function startServer(options: {
   port: number;
   dev?: boolean;
   input?: string;
+  token?: string;
+  store?: ReviewStore;
 }) {
-  const repository =
+  const source =
     options.input === undefined
       ? await openRepository(options.directory)
       : openPatch(options.input);
+  const token = options.token ?? randomBytes(24).toString("hex");
+  const sessionId = createHash("sha256")
+    .update(`${source.kind}\0${source.root}`)
+    .digest("hex");
+  const store = options.store ?? new ReviewStore(defaultReviewPath(sessionId));
   const dist = resolve(webRoot, "dist");
   if (!options.dev) {
     await stat(resolve(dist, "index.html")).catch(() => {
@@ -65,10 +72,11 @@ export async function startServer(options: {
     { time: number; result: Promise<RepositoryDiff> }
   >();
   const networkAddress = localNetworkAddress();
-  function snapshot(mode: DiffMode) {
+  function snapshot(mode: DiffMode, fresh = false) {
     const cached = snapshots.get(mode);
-    if (cached && Date.now() - cached.time < 500) return cached.result;
-    const result = repository.snapshot(mode);
+    if (!fresh && cached && Date.now() - cached.time < 500)
+      return cached.result;
+    const result = source.snapshot(mode);
     snapshots.set(mode, { time: Date.now(), result });
     result.catch(() => snapshots.delete(mode));
     return result;
@@ -89,50 +97,22 @@ export async function startServer(options: {
         throw new RequestError(403, "Cross-origin access denied");
       if (request.headers["sec-fetch-site"] === "cross-site")
         throw new RequestError(403, "Cross-site access denied");
-      if (request.method !== "GET" && request.method !== "HEAD")
-        throw new RequestError(405, "Read-only server");
       response.setHeader("X-Content-Type-Options", "nosniff");
       response.setHeader("Referrer-Policy", "no-referrer");
       response.setHeader("Cache-Control", "no-store");
       const url = new URL(request.url ?? "/", `http://${host}`);
-      if (url.pathname.startsWith("/api/")) {
-        const mode = url.searchParams.get("mode") ?? "all";
-        if (!isDiffMode(mode)) throw new RequestError(400, "Invalid diff mode");
-        const current = await snapshot(mode);
-        let body: unknown;
-        if (url.pathname === "/api/diff") {
-          body = current;
-        } else if (url.pathname === "/api/file") {
-          const path = url.searchParams.get("path");
-          const file = current.files.find((entry) => entry.path === path);
-          if (!file)
-            throw new RequestError(404, "File is not in the current diff");
-          if (url.searchParams.get("version") !== file.fingerprint)
-            throw new RequestError(
-              409,
-              "Diff changed. Refresh to load the latest version.",
-            );
-          body = await repository.patch(mode, file, current.head);
-        } else if (url.pathname === "/api/contents") {
-          const path = url.searchParams.get("path");
-          const file = current.files.find((entry) => entry.path === path);
-          if (!file)
-            throw new RequestError(404, "File is not in the current diff");
-          if (url.searchParams.get("version") !== file.fingerprint)
-            throw new RequestError(
-              409,
-              "Diff changed. Refresh to load the latest version.",
-            );
-          body = await repository.contents(mode, file, current.head);
-        } else {
-          throw new RequestError(404, "Unknown API route");
-        }
-        response.setHeader("Content-Type", "application/json; charset=utf-8");
-        response.end(
-          request.method === "HEAD" ? undefined : JSON.stringify(body),
-        );
+      if (
+        await handleApi(request, response, url, {
+          source,
+          sessionId,
+          token,
+          store,
+          snapshot,
+        })
+      )
         return;
-      }
+      if (request.method !== "GET" && request.method !== "HEAD")
+        throw new RequestError(405, "Method not allowed");
       if (vite) {
         if (url.pathname === "/") {
           const html = await vite.transformIndexHtml(
@@ -170,17 +150,7 @@ export async function startServer(options: {
         response.destroy();
         return;
       }
-      response.writeHead(error instanceof RequestError ? error.status : 500, {
-        "Content-Type": "application/json",
-      });
-      response.end(
-        JSON.stringify({
-          error:
-            error instanceof Error
-              ? error.message
-              : "Unable to read repository",
-        }),
-      );
+      await respondWithProblem(response, error);
     }
   });
   try {
@@ -196,13 +166,15 @@ export async function startServer(options: {
   if (!address || typeof address === "string")
     throw new Error("Unable to bind server");
   return {
-    root: repository.root,
+    root: source.root,
+    token,
+    sessionId,
     url: `http://127.0.0.1:${address.port}`,
     addresses: {
-      localhost: `http://localhost:${address.port}`,
-      all: `http://0.0.0.0:${address.port}`,
+      localhost: `http://localhost:${address.port}#token=${token}`,
+      all: `http://0.0.0.0:${address.port}#token=${token}`,
       network: networkAddress
-        ? `http://${networkAddress}:${address.port}`
+        ? `http://${networkAddress}:${address.port}#token=${token}`
         : null,
     },
     async close() {

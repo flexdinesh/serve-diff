@@ -5,6 +5,7 @@ export function isDiffMode(value: unknown): value is DiffMode {
 }
 
 export interface ChangedFile {
+  id: string;
   path: string;
   oldPath: string | null;
   status: string;
@@ -18,7 +19,7 @@ export interface ChangedFile {
 }
 
 export interface RepositoryDiff {
-  source?: "stdin";
+  source: "local" | "stdin";
   root: string;
   name: string;
   branch: string;
@@ -33,3 +34,5 @@ export interface FilePatch {
   message: string | null;
   contents?: { before: string; after: string };
 }
+
+export * from "./review.ts";

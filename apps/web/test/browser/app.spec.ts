@@ -1,4 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { resetFixtureState } from "./fixture-state.ts";
+
+test.beforeEach(async ({ request }) => resetFixtureState(request));
 
 test("renders and filters a piped diff", async ({ page }) => {
   await page.goto("/");
@@ -179,7 +182,7 @@ test("inline comments use a distinct structured surface while sidebar comments r
 }) => {
   await page.goto("/");
   await page.evaluate(async () => {
-    const response = await fetch("/api/diff");
+    const response = await fetch("/api/v1/diffs/current?scope=all");
     const data: unknown = await response.json();
     if (typeof data !== "object" || data === null)
       throw new Error("Bad fixture");
@@ -717,7 +720,7 @@ test("fallback copy dialog traps and restores focus", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("#connection")).toHaveText("Fixed snapshot");
   await page.evaluate(async () => {
-    const response = await fetch("/api/diff");
+    const response = await fetch("/api/v1/diffs/current?scope=all");
     const data: unknown = await response.json();
     if (typeof data !== "object" || data === null)
       throw new Error("Bad fixture");

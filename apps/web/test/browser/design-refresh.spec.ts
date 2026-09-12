@@ -1,8 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
+import { resetFixtureState } from "./fixture-state.ts";
+
+test.beforeEach(async ({ request }) => resetFixtureState(request));
 
 async function seedReviewComments(page: Page) {
   await page.evaluate(async () => {
-    const response = await fetch("/api/diff");
+    const response = await fetch("/api/v1/diffs/current?scope=all");
     const data: unknown = await response.json();
     if (typeof data !== "object" || data === null)
       throw new Error("Bad fixture");

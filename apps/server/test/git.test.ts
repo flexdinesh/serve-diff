@@ -260,50 +260,90 @@ test("serves browser assets and validates API paths, versions, modes, hosts, ori
   await write("hello.ts", "export const hello = true;\n");
   const server = await startServer({ directory: root, port: 0, dev: true });
   t.after(() => server.close());
-  assert.match(server.addresses.localhost, /^http:\/\/localhost:\d+$/);
-  assert.match(server.addresses.all, /^http:\/\/0\.0\.0\.0:\d+$/);
+  assert.match(
+    server.addresses.localhost,
+    /^http:\/\/localhost:\d+#token=[a-f\d]+$/,
+  );
+  assert.match(
+    server.addresses.all,
+    /^http:\/\/0\.0\.0\.0:\d+#token=[a-f\d]+$/,
+  );
   if (server.addresses.network) {
     assert.match(
       server.addresses.network,
-      /^http:\/\/\d{1,3}(?:\.\d{1,3}){3}:\d+$/,
+      /^http:\/\/\d{1,3}(?:\.\d{1,3}){3}:\d+#token=[a-f\d]+$/,
     );
     assert.equal((await fetch(server.addresses.network)).status, 200);
   }
   const snapshot = await repository.snapshot("all");
   const file = snapshot.files[0];
   assert.ok(file);
-  const fileURL = `${server.url}/api/file?${new URLSearchParams({ path: file.path, version: file.fingerprint })}`;
-  const contentsURL = `${server.url}/api/contents?${new URLSearchParams({ path: file.path, version: file.fingerprint })}`;
+  const query = new URLSearchParams({
+    scope: "all",
+    fileVersion: file.fingerprint,
+  });
+  const fileURL = `${server.url}/api/v1/diffs/${snapshot.revision}/files/${file.id}/patch?${query}`;
+  const contentsURL = `${server.url}/api/v1/diffs/${snapshot.revision}/files/${file.id}/contents?${query}`;
+  const authorized = { headers: { Authorization: `Bearer ${server.token}` } };
   assert.equal((await fetch(server.url)).status, 200);
   assert.match(await (await fetch(server.url)).text(), /serve-diff/);
   assert.equal(
     (await fetch(`${server.url}/logo.png`)).headers.get("content-type"),
     "image/png",
   );
-  assert.equal((await fetch(`${server.url}/api/diff`)).status, 200);
-  assert.match(await (await fetch(fileURL)).text(), /export const hello/);
-  assert.deepEqual(await (await fetch(contentsURL)).json(), {
+  assert.equal(
+    (await fetch(`${server.url}/api/v1/diffs/current?scope=all`)).status,
+    401,
+  );
+  assert.equal(
+    (await fetch(`${server.url}/api/v1/diffs/current?scope=all`, authorized))
+      .status,
+    200,
+  );
+  assert.match(
+    await (await fetch(fileURL, authorized)).text(),
+    /export const hello/,
+  );
+  assert.deepEqual(await (await fetch(contentsURL, authorized)).json(), {
     before: "",
     after: "export const hello = true;\n",
   });
-  assert.equal((await fetch(`${server.url}/api/diff?mode=bad`)).status, 400);
   assert.equal(
-    (await fetch(`${server.url}/api/file?path=../../.git/config`)).status,
+    (await fetch(`${server.url}/api/v1/diffs/current?scope=bad`, authorized))
+      .status,
+    400,
+  );
+  assert.equal(
+    (
+      await fetch(
+        `${server.url}/api/v1/diffs/${snapshot.revision}/files/missing/patch?scope=all&fileVersion=x`,
+        authorized,
+      )
+    ).status,
     404,
   );
   assert.equal(
-    (await fetch(`${server.url}/api/file?path=hello.ts&version=stale`)).status,
+    (
+      await fetch(
+        `${server.url}/api/v1/diffs/${snapshot.revision}/files/${file.id}/patch?scope=all&fileVersion=stale`,
+        authorized,
+      )
+    ).status,
     409,
   );
   assert.equal(
-    (await fetch(`${server.url}/api/contents?path=hello.ts&version=stale`))
-      .status,
+    (
+      await fetch(
+        `${server.url}/api/v1/diffs/stale/files/${file.id}/contents?scope=all&fileVersion=${file.fingerprint}`,
+        authorized,
+      )
+    ).status,
     409,
   );
   const invalidHostStatus = await new Promise<number | undefined>(
     (resolve, reject) => {
       get(
-        `${server.url}/api/diff`,
+        `${server.url}/api/v1/diffs/current?scope=all`,
         { headers: { Host: "evil.example" } },
         (response) => {
           response.resume();
@@ -315,14 +355,22 @@ test("serves browser assets and validates API paths, versions, modes, hosts, ori
   assert.equal(invalidHostStatus, 403);
   assert.equal(
     (
-      await fetch(`${server.url}/api/diff`, {
-        headers: { Origin: "https://evil.example" },
+      await fetch(`${server.url}/api/v1/diffs/current?scope=all`, {
+        headers: {
+          Authorization: `Bearer ${server.token}`,
+          Origin: "https://evil.example",
+        },
       })
     ).status,
     403,
   );
   assert.equal(
-    (await fetch(`${server.url}/api/diff`, { method: "POST" })).status,
+    (
+      await fetch(`${server.url}/api/v1/diffs/current?scope=all`, {
+        ...authorized,
+        method: "POST",
+      })
+    ).status,
     405,
   );
   assert.equal((await fetch(`${server.url}/missing.js`)).status, 404);

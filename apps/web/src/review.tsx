@@ -331,8 +331,7 @@ export function CommentCard({
         >
           <DialogTitle>Delete comment?</DialogTitle>
           <DialogDescription>
-            This removes the comment from your local review. This cannot be
-            undone.
+            This permanently removes the comment. This cannot be undone.
           </DialogDescription>
           <DialogFooter>
             <Button

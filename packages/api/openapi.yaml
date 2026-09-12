@@ -1,0 +1,543 @@
+openapi: 3.1.0
+info:
+  title: serve-diff API
+  version: 1.0.0
+  description: Local diff review API.
+servers:
+  - url: /
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/session:
+    get:
+      operationId: getSession
+      responses:
+        "200":
+          description: Active diff source and capabilities.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        default:
+          $ref: "#/components/responses/Problem"
+  /api/v1/diffs/current:
+    get:
+      operationId: getCurrentDiff
+      parameters:
+        - $ref: "#/components/parameters/Scope"
+      responses:
+        "200":
+          description: Current diff snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepositoryDiff"
+        default:
+          $ref: "#/components/responses/Problem"
+  /api/v1/diffs/{diffId}/files/{fileId}/patch:
+    get:
+      operationId: getFilePatch
+      parameters:
+        - $ref: "#/components/parameters/DiffId"
+        - $ref: "#/components/parameters/FileId"
+        - $ref: "#/components/parameters/Scope"
+        - $ref: "#/components/parameters/FileVersion"
+      responses:
+        "200":
+          description: File patch.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilePatch"
+        default:
+          $ref: "#/components/responses/Problem"
+  /api/v1/diffs/{diffId}/files/{fileId}/contents:
+    get:
+      operationId: getFileContents
+      parameters:
+        - $ref: "#/components/parameters/DiffId"
+        - $ref: "#/components/parameters/FileId"
+        - $ref: "#/components/parameters/Scope"
+        - $ref: "#/components/parameters/FileVersion"
+      responses:
+        "200":
+          description: Complete before and after contents.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileContents"
+        default:
+          $ref: "#/components/responses/Problem"
+  /api/v1/comments:
+    get:
+      operationId: listComments
+      responses:
+        "200":
+          description: All comments for the active source.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [comments]
+                properties:
+                  comments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ReviewComment"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateComment"
+      responses:
+        "201":
+          description: Created comment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewComment"
+        default:
+          $ref: "#/components/responses/Problem"
+  /api/v1/comments/import:
+    post:
+      operationId: importComments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [comments]
+              properties:
+                comments:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/ReviewComment"
+      responses:
+        "200":
+          description: Idempotently imported comments.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [comments]
+                properties:
+                  comments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ReviewComment"
+        default:
+          $ref: "#/components/responses/Problem"
+  /api/v1/comments/export:
+    get:
+      operationId: exportComments
+      parameters:
+        - name: includeResolved
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: revision
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: scope
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/DiffMode"
+      responses:
+        "200":
+          description: Canonical agent-ready export.
+          content:
+            application/xml:
+              schema:
+                type: string
+        default:
+          $ref: "#/components/responses/Problem"
+  /api/v1/comments/{commentId}:
+    patch:
+      operationId: updateComment
+      parameters:
+        - $ref: "#/components/parameters/CommentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateComment"
+      responses:
+        "200":
+          description: Updated comment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewComment"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteComment
+      parameters:
+        - $ref: "#/components/parameters/CommentId"
+      responses:
+        "204":
+          description: Comment deleted.
+        default:
+          $ref: "#/components/responses/Problem"
+  /api/v1/review-marks:
+    get:
+      operationId: listReviewMarks
+      parameters:
+        - $ref: "#/components/parameters/Scope"
+      responses:
+        "200":
+          description: Reviewed file versions.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [marks]
+                properties:
+                  marks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ReviewMark"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: clearReviewMarks
+      parameters:
+        - $ref: "#/components/parameters/Scope"
+      responses:
+        "204":
+          description: Scope review marks cleared.
+        default:
+          $ref: "#/components/responses/Problem"
+  /api/v1/review-marks/{fileId}:
+    put:
+      operationId: putReviewMark
+      parameters:
+        - $ref: "#/components/parameters/FileId"
+        - $ref: "#/components/parameters/Scope"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fileVersion]
+              properties:
+                fileVersion:
+                  type: string
+      responses:
+        "200":
+          description: Stored review mark.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewMark"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteReviewMark
+      parameters:
+        - $ref: "#/components/parameters/FileId"
+        - $ref: "#/components/parameters/Scope"
+      responses:
+        "204":
+          description: Review mark deleted.
+        default:
+          $ref: "#/components/responses/Problem"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    Scope:
+      name: scope
+      in: query
+      required: true
+      schema:
+        $ref: "#/components/schemas/DiffMode"
+    DiffId:
+      name: diffId
+      in: path
+      required: true
+      schema:
+        type: string
+    FileId:
+      name: fileId
+      in: path
+      required: true
+      schema:
+        type: string
+    FileVersion:
+      name: fileVersion
+      in: query
+      required: true
+      schema:
+        type: string
+    CommentId:
+      name: commentId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    Problem:
+      description: Request failed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    DiffMode:
+      type: string
+      enum: [all, staged, unstaged]
+    Session:
+      type: object
+      additionalProperties: false
+      required: [id, source, name, root, capabilities]
+      properties:
+        id:
+          type: string
+        source:
+          type: string
+          enum: [local, stdin]
+        name:
+          type: string
+        root:
+          type: string
+        capabilities:
+          type: object
+          additionalProperties: false
+          required: [scopes, live, fullFileContents]
+          properties:
+            scopes:
+              type: array
+              items:
+                $ref: "#/components/schemas/DiffMode"
+            live:
+              type: boolean
+            fullFileContents:
+              type: boolean
+    ChangedFile:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          path,
+          oldPath,
+          status,
+          indexStatus,
+          worktreeStatus,
+          additions,
+          deletions,
+          binary,
+          fingerprint,
+        ]
+      properties:
+        id:
+          type: string
+        path:
+          type: string
+        oldPath:
+          type: [string, "null"]
+        status:
+          type: string
+        indexStatus:
+          type: string
+        worktreeStatus:
+          type: string
+        additions:
+          type: integer
+        deletions:
+          type: integer
+        binary:
+          type: boolean
+        fingerprint:
+          type: string
+        recreated:
+          type: boolean
+    RepositoryDiff:
+      type: object
+      additionalProperties: false
+      required: [source, root, name, branch, head, mode, files, revision]
+      properties:
+        source:
+          type: string
+          enum: [local, stdin]
+        root:
+          type: string
+        name:
+          type: string
+        branch:
+          type: string
+        head:
+          type: [string, "null"]
+        mode:
+          $ref: "#/components/schemas/DiffMode"
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChangedFile"
+        revision:
+          type: string
+    FilePatch:
+      type: object
+      additionalProperties: false
+      required: [patch, message]
+      properties:
+        patch:
+          type: string
+        message:
+          type: [string, "null"]
+        contents:
+          $ref: "#/components/schemas/FileContents"
+    FileContents:
+      type: object
+      additionalProperties: false
+      required: [before, after]
+      properties:
+        before:
+          type: string
+        after:
+          type: string
+    ReviewOrigin:
+      type: object
+      additionalProperties: false
+      required: [source, repository, branch, head, revision, file]
+      properties:
+        source:
+          type: string
+          enum: [local, stdin]
+        repository:
+          type: string
+        branch:
+          type: string
+        head:
+          type: [string, "null"]
+        revision:
+          type: string
+        file:
+          type: object
+          additionalProperties: false
+          required: [status, oldPath]
+          properties:
+            status:
+              type: string
+            oldPath:
+              type: [string, "null"]
+    ReviewComment:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          path,
+          scope,
+          fingerprint,
+          side,
+          start,
+          end,
+          code,
+          body,
+          status,
+          createdAt,
+        ]
+      properties:
+        id:
+          type: string
+        path:
+          type: string
+        scope:
+          $ref: "#/components/schemas/DiffMode"
+        fingerprint:
+          type: string
+        side:
+          type: string
+          enum: [additions, deletions]
+        start:
+          type: integer
+          minimum: 1
+        end:
+          type: integer
+          minimum: 1
+        code:
+          type: string
+        body:
+          type: string
+        status:
+          type: string
+          enum: [open, resolved]
+        createdAt:
+          type: number
+        origin:
+          $ref: "#/components/schemas/ReviewOrigin"
+    CreateComment:
+      type: object
+      additionalProperties: false
+      required: [diffId, fileId, scope, fileVersion, side, start, end, body]
+      properties:
+        diffId:
+          type: string
+        fileId:
+          type: string
+        scope:
+          $ref: "#/components/schemas/DiffMode"
+        fileVersion:
+          type: string
+        side:
+          type: string
+          enum: [additions, deletions]
+        start:
+          type: integer
+          minimum: 1
+        end:
+          type: integer
+          minimum: 1
+        body:
+          type: string
+    UpdateComment:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        body:
+          type: string
+        status:
+          type: string
+          enum: [open, resolved]
+    ReviewMark:
+      type: object
+      additionalProperties: false
+      required: [fileId, fileVersion, scope]
+      properties:
+        fileId:
+          type: string
+        fileVersion:
+          type: string
+        scope:
+          $ref: "#/components/schemas/DiffMode"
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, detail]
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
