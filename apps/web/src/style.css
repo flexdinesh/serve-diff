@@ -59,12 +59,14 @@ textarea::placeholder {
   opacity: 1;
 }
 svg {
-  width: var(--icon-base);
-  height: var(--icon-base);
   fill: none;
   stroke: currentColor;
   stroke-width: 1.3;
   flex-shrink: 0;
+}
+svg:not([class*="size-"]) {
+  width: var(--icon-base);
+  height: var(--icon-base);
 }
 kbd {
   font: var(--text-xs) var(--font-mono);
@@ -194,8 +196,6 @@ kbd {
   padding: 0;
 }
 .topbar [data-slot="button"] svg {
-  width: 1em;
-  height: 1em;
   stroke-width: 1.7;
 }
 .workspace {

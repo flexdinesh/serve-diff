@@ -10,10 +10,15 @@ import {
   useRef,
   useState,
 } from "react";
-import { ancestorPaths } from "./file-tree.ts";
+import { ancestorPaths, filesInTreeOrder } from "./file-tree.ts";
 import { readDiffTheme, readLineDiffType } from "./display-options.ts";
 import { save, saved, savedReviews } from "./preferences.ts";
 import { toggleReviewedFileState } from "./review-state.ts";
+import {
+  readThemePreference,
+  resolveTheme,
+  THEME_STORAGE_KEY,
+} from "./theme.ts";
 import {
   anchored,
   type CommentAnnotation,
@@ -37,9 +42,13 @@ function usePageState() {
   const [layout, setLayout] = useState<"split" | "unified">(() =>
     saved("layout") === "unified" ? "unified" : "split",
   );
-  const [theme, setTheme] = useState<"light" | "dark">(() =>
-    saved("theme") === "dark" ? "dark" : "light",
+  const [themePreference, setThemePreference] = useState(() =>
+    readThemePreference(saved(THEME_STORAGE_KEY)),
   );
+  const [systemDark, setSystemDark] = useState(
+    () => window.matchMedia("(prefers-color-scheme: dark)").matches,
+  );
+  const theme = resolveTheme(themePreference, systemDark);
   const [wrap, setWrap] = useState(() => saved("wrap") === "true");
   const [diffTheme, setDiffTheme] = useState(() =>
     readDiffTheme(saved("diff-theme")),
@@ -78,9 +87,11 @@ function usePageState() {
   );
   const files = useMemo(
     () =>
-      repository?.files.filter((file) =>
-        file.path.toLowerCase().includes(filter.toLowerCase()),
-      ) ?? [],
+      filesInTreeOrder(
+        repository?.files.filter((file) =>
+          file.path.toLowerCase().includes(filter.toLowerCase()),
+        ) ?? [],
+      ),
     [repository, filter],
   );
   const activePath = files.some((file) => file.path === selected)
@@ -100,9 +111,18 @@ function usePageState() {
     storeReviews(next.reviews);
   }
   useEffect(() => {
+    const query = window.matchMedia("(prefers-color-scheme: dark)");
+    const updateSystemTheme = () => setSystemDark(query.matches);
+    updateSystemTheme();
+    query.addEventListener("change", updateSystemTheme);
+    return () => query.removeEventListener("change", updateSystemTheme);
+  }, []);
+  useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    save("theme", theme);
   }, [theme]);
+  useEffect(() => {
+    save(THEME_STORAGE_KEY, themePreference);
+  }, [themePreference]);
   useEffect(() => {
     save("layout", layout);
   }, [layout]);
@@ -251,7 +271,8 @@ function usePageState() {
     source: { diff, repository, mode, piped, changeMode },
     display: {
       theme,
-      setTheme,
+      themePreference,
+      setThemePreference,
       layout,
       setLayout,
       wrap,

@@ -1,20 +1,36 @@
 import {
   GitBranchIcon,
+  MonitorIcon,
+  MoonIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   RefreshCwIcon,
   SquareTerminalIcon,
-  SunMoonIcon,
+  SunIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useAppState } from "./app-state.tsx";
+import { readThemePreference, type ThemePreference } from "./theme.ts";
+
+function themeLabel(theme: ThemePreference) {
+  if (theme === "light") return "Light";
+  if (theme === "dark") return "Dark";
+  return "System";
+}
 
 export function Header() {
   const {
     source: { repository, piped, diff },
-    display: { theme, setTheme },
+    display: { themePreference, setThemePreference },
     sidebar,
   } = useAppState();
   return (
@@ -30,7 +46,11 @@ export function Header() {
         title={`${sidebar.expanded ? "Hide" : "Show"} file sidebar`}
         onClick={sidebar.toggle}
       >
-        {sidebar.expanded ? <PanelLeftCloseIcon /> : <PanelLeftOpenIcon />}
+        {sidebar.expanded ? (
+          <PanelLeftCloseIcon className="size-(--icon-lg)" />
+        ) : (
+          <PanelLeftOpenIcon className="size-(--icon-lg)" />
+        )}
       </Button>
       <a className="brand" href="/" aria-label="serve-diff home">
         <span className="brand-mark" aria-hidden="true">
@@ -58,7 +78,11 @@ export function Header() {
         </p>
       </div>
       <Badge variant="secondary" className="branch-badge">
-        {piped ? <SquareTerminalIcon /> : <GitBranchIcon />}
+        {piped ? (
+          <SquareTerminalIcon className="size-(--icon-base)!" />
+        ) : (
+          <GitBranchIcon className="size-(--icon-base)!" />
+        )}
         <span id="branch">{repository?.branch ?? "—"}</span>
       </Badge>
       <Badge variant="secondary" className="local-badge">
@@ -74,20 +98,49 @@ export function Header() {
         aria-busy={diff.busy}
         onClick={diff.refresh}
       >
-        <RefreshCwIcon aria-hidden="true" />
+        <RefreshCwIcon className="size-(--icon-base)" aria-hidden="true" />
         <span className="refresh-label">Refresh</span>
       </Button>
-      <Button
-        type="button"
-        id="theme"
-        variant="ghost"
-        size="icon"
-        aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-        title="Switch theme"
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      >
-        <SunMoonIcon aria-hidden="true" />
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              type="button"
+              id="theme"
+              variant="ghost"
+              size="icon"
+              aria-label={`Theme: ${themeLabel(themePreference)}`}
+              title={`Theme: ${themeLabel(themePreference)}`}
+            />
+          }
+        >
+          {themePreference === "system" ? (
+            <MonitorIcon className="size-(--icon-lg)" aria-hidden="true" />
+          ) : themePreference === "dark" ? (
+            <MoonIcon className="size-(--icon-lg)" aria-hidden="true" />
+          ) : (
+            <SunIcon className="size-(--icon-lg)" aria-hidden="true" />
+          )}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" aria-label="Theme">
+          <DropdownMenuRadioGroup
+            value={themePreference}
+            onValueChange={(value: unknown) =>
+              setThemePreference(readThemePreference(value))
+            }
+          >
+            <DropdownMenuRadioItem value="light" closeOnClick>
+              <SunIcon aria-hidden="true" /> Light
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="dark" closeOnClick>
+              <MoonIcon aria-hidden="true" /> Dark
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="system" closeOnClick>
+              <MonitorIcon aria-hidden="true" /> System
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </header>
   );
 }

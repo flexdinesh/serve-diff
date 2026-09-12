@@ -50,7 +50,6 @@
   color: var(--text-secondary);
   font-size: var(--text-base);
   font-weight: var(--weight-medium);
-  border-bottom: 2px solid transparent;
 }
 .sidebar-tabs .tree-control {
   align-self: center;
@@ -62,7 +61,6 @@
 }
 .sidebar-tabs [data-slot="tabs-trigger"][data-active] {
   color: var(--fg);
-  border-bottom-color: var(--accent);
 }
 .sidebar-tabs .count {
   flex-shrink: 0;
@@ -200,14 +198,24 @@
   gap: var(--space-1);
 }
 .file-comment-count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
   color: var(--accent);
   font: var(--text-xs) var(--font-sans);
   white-space: nowrap;
+}
+.file-comment-count svg {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
 }
 #sidebar-resizer {
   /* Overlap the pane divider without shifting the viewer's alignment. */
   margin: 0 0 0 -3px;
   width: 5px;
+  height: auto;
+  align-self: stretch;
   border: 0;
   flex: 0 0 5px;
   cursor: col-resize;

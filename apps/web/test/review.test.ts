@@ -3,7 +3,11 @@ import { test } from "node:test";
 import { parsePatchFiles } from "@pierre/diffs";
 import type { ChangedFile, RepositoryDiff } from "@serve-diff/shared";
 import { fileKind, gitDecoration } from "../src/file-decoration.ts";
-import { ancestorPaths, buildFileTree } from "../src/file-tree.ts";
+import {
+  ancestorPaths,
+  buildFileTree,
+  filesInTreeOrder,
+} from "../src/file-tree.ts";
 import {
   commentContext,
   createCommentId,
@@ -117,13 +121,14 @@ test("creates comment IDs without randomUUID", () => {
 });
 
 test("builds actual nested folders, ordered before files, without merging similar prefixes", () => {
-  const tree = buildFileTree([
+  const files = [
     file("z.txt"),
     file("app/server/src/git.ts"),
     file("app/web/main.ts"),
     file("app/server/a.ts"),
     file("apple/readme.md"),
-  ]);
+  ];
+  const tree = buildFileTree(files);
   assert.deepEqual(
     tree.map((node) => node.name),
     ["app", "apple", "z.txt"],
@@ -146,6 +151,16 @@ test("builds actual nested folders, ordered before files, without merging simila
     "app/server/src",
   ]);
   assert.deepEqual(ancestorPaths("README.md"), []);
+  assert.deepEqual(
+    filesInTreeOrder(files).map((entry) => entry.path),
+    [
+      "app/server/src/git.ts",
+      "app/server/a.ts",
+      "app/web/main.ts",
+      "apple/readme.md",
+      "z.txt",
+    ],
+  );
 });
 
 test("filtering leaves the full ancestor chain and preserves unusual filenames", () => {

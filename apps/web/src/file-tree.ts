@@ -41,6 +41,18 @@ export function buildFileTree(files: readonly ChangedFile[]): FileTreeNode[] {
   return root;
 }
 
+export function filesInTreeOrder(files: readonly ChangedFile[]): ChangedFile[] {
+  const ordered: ChangedFile[] = [];
+  function visit(nodes: readonly FileTreeNode[]) {
+    for (const node of nodes) {
+      if (node.kind === "folder") visit(node.children);
+      else ordered.push(node.file);
+    }
+  }
+  visit(buildFileTree(files));
+  return ordered;
+}
+
 export function ancestorPaths(path: string): string[] {
   const parts = path.split("/");
   return parts

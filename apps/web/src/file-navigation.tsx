@@ -1,4 +1,5 @@
 import type { ChangedFile } from "@serve-diff/shared";
+import { MessageSquareIcon } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,23 +54,7 @@ function FileIcon({ path, reviewed }: { path: string; reviewed: boolean }) {
   );
 }
 function CommentIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      width="1em"
-      height="1em"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M3 4.5h14v9H8l-4 3v-3H3Z" />
-      <path d="M7 8h6M7 10.5h4" />
-    </svg>
-  );
+  return <MessageSquareIcon aria-hidden="true" focusable="false" />;
 }
 function StatusBadge({ file }: { file: ChangedFile }) {
   const decoration = gitDecoration(file);
