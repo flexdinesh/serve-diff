@@ -1,3 +1,14 @@
+import {
+  GitBranchIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
+  RefreshCwIcon,
+  SquareTerminalIcon,
+  SunMoonIcon,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { useAppState } from "./app-state.tsx";
 
 export function Header() {
@@ -8,26 +19,19 @@ export function Header() {
   } = useAppState();
   return (
     <header className="topbar">
-      <button
+      <Button
         type="button"
         id="sidebar-toggle"
-        className="icon-button"
+        variant="ghost"
+        size="icon"
         aria-controls="sidebar"
         aria-expanded={sidebar.expanded}
         aria-label={`${sidebar.expanded ? "Hide" : "Show"} file sidebar`}
         title={`${sidebar.expanded ? "Hide" : "Show"} file sidebar`}
         onClick={sidebar.toggle}
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <rect x="3" y="3" width="18" height="18" rx="1.5" />
-          <path d="M15 3v18" />
-          <path
-            d={sidebar.expanded ? "m11 8-4 4 4 4Z" : "m7 8 4 4-4 4Z"}
-            fill="currentColor"
-            stroke="none"
-          />
-        </svg>
-      </button>
+        {sidebar.expanded ? <PanelLeftCloseIcon /> : <PanelLeftOpenIcon />}
+      </Button>
       <a className="brand" href="/" aria-label="serve-diff home">
         <span className="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -36,7 +40,7 @@ export function Header() {
         </span>
         <span className="brand-name">serve-diff</span>
       </a>
-      <span className="header-divider" />
+      <Separator className="header-divider" orientation="vertical" />
       <div className="header-heading">
         <div className="header-title">
           <h1 id="changes-title">{piped ? "Piped diff" : "Local diff"}</h1>
@@ -53,50 +57,37 @@ export function Header() {
             : (repository?.root ?? "Reading your repository…")}
         </p>
       </div>
-      <span className="branch-badge">
-        <svg viewBox="0 0 16 16" aria-hidden="true">
-          {piped ? (
-            <>
-              <rect x="1.5" y="2.5" width="13" height="11" rx="2" />
-              <path d="m4 5 2.5 3L4 11m4-1h4" />
-            </>
-          ) : (
-            <>
-              <path d="M4 4v7m8-7v2a3 3 0 0 1-3 3H7" />
-              <circle cx="4" cy="3" r="2" />
-              <circle cx="4" cy="13" r="2" />
-              <circle cx="12" cy="3" r="2" />
-            </>
-          )}
-        </svg>
+      <Badge variant="secondary" className="branch-badge">
+        {piped ? <SquareTerminalIcon /> : <GitBranchIcon />}
         <span id="branch">{repository?.branch ?? "—"}</span>
-      </span>
-      <span className="local-badge">
+      </Badge>
+      <Badge variant="secondary" className="local-badge">
         <span /> Local only
-      </span>
-      <button
+      </Badge>
+      <Button
         type="button"
         id="refresh"
-        className="button"
+        variant="outline"
         aria-label="Refresh changes"
         title="Refresh changes (R)"
         hidden={piped}
         aria-busy={diff.busy}
         onClick={diff.refresh}
       >
-        <span aria-hidden="true">↻</span>
+        <RefreshCwIcon aria-hidden="true" />
         <span className="refresh-label">Refresh</span>
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         id="theme"
-        className="icon-button"
+        variant="ghost"
+        size="icon"
         aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
         title="Switch theme"
         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       >
-        ◐
-      </button>
+        <SunMoonIcon aria-hidden="true" />
+      </Button>
     </header>
   );
 }

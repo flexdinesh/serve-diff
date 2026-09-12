@@ -1,6 +1,9 @@
 # serve-diff
 
-Review local Git changes in your browser. Built with React and [Pierre diffs](https://diffs.com), inspired by diffshub and [diffx](https://github.com/wong2/diffx).
+Review local Git changes in your browser. Built with React, Vite, Tailwind CSS v4,
+[shadcn/ui](https://ui.shadcn.com) on Base UI, and
+[Pierre diffs](https://diffs.com); inspired by diffshub and
+[diffx](https://github.com/wong2/diffx).
 
 ## Setup
 
@@ -71,6 +74,10 @@ pnpm check
 
 Run `pnpm build` after frontend changes, then restart `serve-diff`. No global reinstall needed.
 
-UI work follows [DESIGN.md](DESIGN.md). Reuse semantic tokens in `apps/web/src/tokens.css` and typography in `apps/web/src/typography.css`; preserve Pierre's measured code geometry.
+UI work follows [DESIGN.md](DESIGN.md). Existing semantic tokens in
+`apps/web/src/tokens.css` remain canonical and are mapped into Tailwind/shadcn
+theme roles by the global stylesheet. Reuse repository-owned primitives in
+`apps/web/src/components/ui`; reserve authored CSS for specialized layout,
+dynamic geometry, and Pierre's measured rendering boundary.
 
 `App.tsx` composes the page sections. `app-state.tsx` owns shared state through `AppProvider`; `DiffWorkspace.tsx` owns Pierre rendering, and `use-review.ts` handles comment persistence. Section-only state stays with its component.

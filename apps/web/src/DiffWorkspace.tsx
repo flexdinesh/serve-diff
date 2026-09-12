@@ -10,6 +10,7 @@ import {
   useWorkerPool,
 } from "@pierre/diffs/react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { togglePath, useAppState } from "./app-state.tsx";
 import { DiffToolbar } from "./DiffToolbar.tsx";
 import { themesFor } from "./display-options.ts";
@@ -346,9 +347,11 @@ export function DiffWorkspace() {
             options={options}
             style={{ height: "100%", width: "100%", overflow: "auto" }}
             renderHeaderPrefix={(item) => (
-              <button
+              <Button
                 type="button"
                 className="diff-collapse"
+                variant="ghost"
+                size="icon-xs"
                 aria-label={`${item.collapsed ? "Expand" : "Collapse"} ${item.id}`}
                 aria-expanded={!item.collapsed}
                 onClick={() =>
@@ -358,14 +361,16 @@ export function DiffWorkspace() {
                 <svg viewBox="0 0 16 16" aria-hidden="true">
                   <path d={item.collapsed ? "m6 4 4 4-4 4" : "m4 6 4 4 4-4"} />
                 </svg>
-              </button>
+              </Button>
             )}
             renderHeaderMetadata={(item) => {
               const file = allFiles.find((file) => file.path === item.id);
               return file ? (
-                <button
+                <Button
                   type="button"
                   className="review-button"
+                  variant="outline"
+                  size="xs"
                   aria-label={`Mark ${file.path} ${isReviewed(file) ? "unreviewed" : "reviewed"}`}
                   aria-pressed={isReviewed(file)}
                   onClick={() => toggleReviewed(file)}
@@ -379,7 +384,7 @@ export function DiffWorkspace() {
                     {isReviewed(file) && <path d="m4.5 8 2.5 2.5 4.5-5" />}
                   </svg>
                   viewed
-                </button>
+                </Button>
               ) : null;
             }}
             renderAnnotation={(annotation) =>

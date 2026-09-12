@@ -1,5 +1,14 @@
 import type { RepositoryDiff } from "@serve-diff/shared";
 import { useEffect, useRef } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { useAppState } from "./app-state.tsx";
 import { anchored, type ReviewComment } from "./review-model.ts";
 
@@ -76,7 +85,7 @@ export function CommentEditor({
       }}
     >
       <strong>Comment on {location(draft)}</strong>
-      <textarea
+      <Textarea
         ref={input}
         placeholder="Leave a review comment…"
         aria-label="Review comment"
@@ -97,16 +106,12 @@ export function CommentEditor({
       />
       <div className="comment-actions">
         <span>⌘ / Ctrl + Enter to save</span>
-        <button type="button" className="quiet-button" onClick={onCancel}>
+        <Button type="button" variant="ghost" size="xs" onClick={onCancel}>
           Cancel
-        </button>
-        <button
-          type="submit"
-          className="button primary-button"
-          disabled={!draft.body.trim()}
-        >
+        </Button>
+        <Button type="submit" disabled={!draft.body.trim()}>
           Save comment
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -136,14 +141,16 @@ export function CommentCard({
     >
       <div className="comment-card-header">
         {sidebar ? (
-          <button
+          <Button
             type="button"
             className="comment-location"
+            variant="ghost"
+            size="xs"
             title={location(comment)}
             onClick={() => onNavigate(comment)}
           >
             {location(comment)}
-          </button>
+          </Button>
         ) : (
           <span>
             Review · {comment.side === "additions" ? "new" : "old"} line{" "}
@@ -151,9 +158,9 @@ export function CommentCard({
             {comment.end !== comment.start ? `–${comment.end}` : ""}
           </span>
         )}
-        <span className="comment-state">
+        <Badge variant="outline" className="comment-state">
           {comment.status === "resolved" ? "Resolved" : "Open"}
-        </span>
+        </Badge>
       </div>
       <p className="comment-body">{comment.body}</p>
       {sidebar && (
@@ -172,27 +179,30 @@ export function CommentCard({
         </>
       )}
       <div className="comment-actions">
-        <button
+        <Button
           type="button"
-          className="quiet-button"
+          variant="ghost"
+          size="xs"
           onClick={() => onEdit(comment)}
         >
           Edit
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="quiet-button"
+          variant="ghost"
+          size="xs"
           onClick={() => onToggle(comment)}
         >
           {comment.status === "resolved" ? "Reopen" : "Resolve"}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="quiet-button destructive-button"
+          variant="destructive"
+          size="xs"
           onClick={() => onDelete(comment)}
         >
           Delete
-        </button>
+        </Button>
       </div>
     </article>
   );
@@ -205,31 +215,30 @@ export function CopyDialog({
   text: string;
   onClose: () => void;
 }) {
-  const dialog = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => {
-    const node = dialog.current;
-    node?.showModal();
-    input.current?.focus();
-    input.current?.select();
-    return () => node?.close();
-  }, []);
   return (
-    <dialog
-      ref={dialog}
-      className="copy-dialog"
-      aria-labelledby="copy-dialog-title"
-      onCancel={onClose}
+    <Dialog
+      open
+      onOpenChange={(open) => !open && onClose()}
+      onOpenChangeComplete={(open) => {
+        if (open) input.current?.select();
+      }}
     >
-      <h2 id="copy-dialog-title">Copy review comments</h2>
-      <p>
-        Clipboard access is unavailable. Copy the selected text with ⌘C /
-        Ctrl+C.
-      </p>
-      <textarea ref={input} value={text} readOnly aria-label="Comments XML" />
-      <button type="button" className="button" onClick={onClose}>
-        Close
-      </button>
-    </dialog>
+      <DialogContent
+        className="copy-dialog"
+        showCloseButton={false}
+        initialFocus={input}
+      >
+        <DialogTitle id="copy-dialog-title">Copy review comments</DialogTitle>
+        <DialogDescription>
+          Clipboard access is unavailable. Copy the selected text with ⌘C /
+          Ctrl+C.
+        </DialogDescription>
+        <Textarea ref={input} value={text} readOnly aria-label="Comments XML" />
+        <Button type="button" variant="outline" onClick={onClose}>
+          Close
+        </Button>
+      </DialogContent>
+    </Dialog>
   );
 }

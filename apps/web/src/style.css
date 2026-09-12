@@ -1,3 +1,9 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   font-family: var(--font-sans);
   color: var(--fg);
@@ -181,23 +187,13 @@ kbd {
   border-radius: 50%;
   display: inline-block;
 }
-.icon-button {
-  width: var(--control-height);
-  height: var(--control-height);
-  border-radius: var(--radius-md);
-  font-size: var(--icon-lg);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
 #sidebar-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
 }
-.icon-button svg {
+.topbar [data-slot="button"] svg {
   width: 1em;
   height: 1em;
   stroke-width: 1.7;
@@ -385,30 +381,8 @@ main {
   display: flex;
   flex-direction: column;
 }
-.button {
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  min-height: var(--control-height);
-  padding: var(--space-1) var(--space-3);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  font-size: var(--text-base);
-  font-weight: var(--weight-medium);
-  white-space: nowrap;
-}
-.button:not(:disabled):hover,
 .review-button:hover {
   background: var(--hover);
-}
-.button span {
-  font-size: var(--icon-base);
-  line-height: calc(2 / 3);
-}
-.button .refresh-label {
-  font-size: inherit;
-  line-height: normal;
 }
 .topbar > button,
 .topbar > .brand {
@@ -449,18 +423,6 @@ main {
   color: var(--accent);
   background: var(--accent-bg);
 }
-.quiet-button {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  min-height: var(--control-height);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-md);
-  white-space: nowrap;
-}
-.quiet-button[aria-pressed="true"] {
-  color: var(--accent);
-  background: var(--accent-bg);
-}
 .toolbar-select {
   display: inline-flex;
   align-items: center;
@@ -469,15 +431,8 @@ main {
   font-size: var(--text-sm);
   white-space: nowrap;
 }
-.toolbar-select select {
+.toolbar-select [data-slot="select-trigger"] {
   min-width: 0;
-  color: var(--fg);
-  border: 1px solid var(--border-strong);
-  background: var(--panel);
-  border-radius: var(--radius-md);
-  min-height: var(--control-height);
-  padding: var(--space-1) var(--space-2);
-  font: inherit;
 }
 .visually-hidden {
   position: absolute;
@@ -629,7 +584,7 @@ h2 {
   #repo-name,
   .local-badge,
   .branch-badge,
-  .button .refresh-label {
+  #refresh .refresh-label {
     display: none;
   }
   #refresh {
@@ -661,5 +616,49 @@ h2 {
   }
   .diff-metadata {
     gap: var(--space-1);
+  }
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-card: var(--panel);
+  --color-card-foreground: var(--fg);
+  --color-popover: var(--surface-raised);
+  --color-popover-foreground: var(--fg);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--on-accent);
+  --color-secondary: var(--panel);
+  --color-secondary-foreground: var(--fg);
+  --color-muted: var(--hover);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--accent-bg);
+  --color-accent-foreground: var(--accent);
+  --color-destructive: var(--error);
+  --color-border: var(--border);
+  --color-input: var(--border-strong);
+  --color-ring: var(--accent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-sidebar: var(--panel);
+  --color-sidebar-foreground: var(--fg);
+  --color-sidebar-primary: var(--accent);
+  --color-sidebar-primary-foreground: var(--on-accent);
+  --color-sidebar-accent: var(--accent-bg);
+  --color-sidebar-accent-foreground: var(--accent);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-ring: var(--accent);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }

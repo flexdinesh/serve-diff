@@ -1,5 +1,6 @@
 import type { ChangedFile } from "@serve-diff/shared";
 import type { KeyboardEvent } from "react";
+import { Button } from "@/components/ui/button";
 import {
   fileKind,
   gitDecoration,
@@ -157,9 +158,10 @@ export function FileNavigation({
             const open = !closed.has(node.path);
             return (
               <li key={node.path}>
-                <button
+                <Button
                   type="button"
                   className="tree-folder"
+                  variant="ghost"
                   style={style}
                   data-tree-path={node.path}
                   title={node.path}
@@ -171,7 +173,7 @@ export function FileNavigation({
                   <span className="tree-chevron">{open ? "⌄" : "›"}</span>
                   <FolderIcon open={open} />
                   <span className="file-name">{node.name}</span>
-                </button>
+                </Button>
                 {open && renderNodes(node.children, depth + 1)}
               </li>
             );
@@ -182,9 +184,10 @@ export function FileNavigation({
           const count = commentCounts.get(file.path) ?? 0;
           return (
             <li key={node.path}>
-              <button
+              <Button
                 type="button"
                 className={`file-row${viewed ? " reviewed" : ""}`}
+                variant="ghost"
                 style={style}
                 data-path={file.path}
                 data-tree-path={file.path}
@@ -205,7 +208,7 @@ export function FileNavigation({
                   </span>
                 )}
                 <StatusBadge file={file} />
-              </button>
+              </Button>
             </li>
           );
         })}

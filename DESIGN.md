@@ -31,14 +31,49 @@ chrome competing with additions, deletions, syntax, or selected lines.
 - `apps/web/src/tokens.css`: semantic colors, spacing, geometry, elevation,
   responsive gutters, and light/dark equivalents.
 - `apps/web/src/typography.css`: fonts, text/icon sizes, weights, line heights.
-- `apps/web/src/style.css`: shell, navigation, shared controls, viewer boundary.
+- `apps/web/src/style.css`: Tailwind entry point, shadcn theme bridge, shell,
+  navigation, and viewer boundary.
+- `apps/web/src/components/ui`: repository-owned shadcn/Base UI primitives and
+  shared variants.
 - `apps/web/src/review.css`: review/sidebar composition and touch adaptations.
 - `apps/web/src/DiffWorkspace.tsx`: Pierre options, React slots, measured metrics.
 - `apps/web/src/display-options.ts`: supported Pierre syntax-theme pairs.
 
 Keep these responsibilities clear. Fix the original shared rule instead of
 adding another late override. Existing short names such as `--bg`, `--fg`, and
-`--panel` are semantic roles; do not create parallel aliases for them.
+`--panel` remain canonical semantic roles; do not create a second design-token
+system for Tailwind or shadcn.
+
+## UI stack and ownership
+
+- React and Vite own application composition and delivery.
+- Tailwind CSS v4 supplies utility styling through its Vite integration and the
+  single global entry stylesheet.
+- shadcn/ui uses Base UI for interactive primitives. Generated components are
+  source code owned by this repository, not an opaque dependency.
+- Add or update primitives through `apps/web/components.json`, then customize
+  the shared component source once to match this design system.
+- Prefer a shared shadcn primitive and its variants for standard controls. Use
+  authored CSS for shell/responsive composition, dynamic tree depth, resizing,
+  measured geometry, status graphics, and Pierre integration.
+
+The global stylesheet maps shadcn/Tailwind theme roles to existing tokens:
+
+| Tailwind/shadcn role     | Canonical token                   |
+| ------------------------ | --------------------------------- |
+| Background / foreground  | `--bg` / `--fg`                   |
+| Card / secondary surface | `--panel`                         |
+| Popover                  | `--surface-raised`                |
+| Primary / focus ring     | `--accent`                        |
+| Primary foreground       | `--on-accent`                     |
+| Border / input           | `--border` / `--border-strong`    |
+| Destructive              | `--error`                         |
+| Muted foreground         | `--muted`                         |
+| Radius / typography      | Existing geometry and type tokens |
+
+Dark mode continues to use `[data-theme="dark"]`; do not add independent
+theme state. Tailwind Preflight and utility use must not override Pierre's
+measured elements or replace the application tokens with framework defaults.
 
 ## Color
 
@@ -184,9 +219,9 @@ such detail into a token. New layout spacing must use the scale.
 
 ### Buttons and toggles
 
-- Reuse `.button`, `.quiet-button`, `.icon-button`, and `.segmented`.
-  `.primary-button` means commit the current task; `.destructive-button` signals
-  a destructive action. Do not create page-specific size variants.
+- Reuse the shared shadcn `Button`, `Toggle`, and `ToggleGroup` primitives.
+  Primary means commit the current task; destructive signals a destructive
+  action. Add shared semantic variants instead of page-specific size variants.
 - Standard control height is `--control-height` (32). Compact header-slot
   controls use `--control-compact` (24); segmented groups share the 32px outer size.
 - Outlined buttons use strong borders, medium UI text, 12px horizontal padding,
@@ -198,13 +233,14 @@ such detail into a token. New layout spacing must use the scale.
 
 ### Forms
 
-- Inputs/selects use `--bg` or `--panel`, `--border-strong`, and `--radius-md`.
-  Textareas share the review body style and 8px/12px padding.
+- Reuse the shared shadcn `Input`, `Select`, and `Textarea` primitives. They use
+  `--bg` or `--panel`, `--border-strong`, and `--radius-md`. Textareas share the
+  review body style and 8px/12px padding.
 - Label every control. Placeholders are hints, not labels. Keep label-to-control
   spacing at 8px, including the heading above a comment editor.
 - Search shows its focus ring around the entire grouped field. Selects and
   textareas retain the shared visible focus ring.
-- Use native controls unless the product requires more. New validation must
+- Keep Base UI values validated at application boundaries. New validation must
   pair `--error` with explanatory text and `aria-invalid` / `aria-describedby`.
 
 ### Cards, navigation, and status
@@ -222,8 +258,8 @@ such detail into a token. New layout spacing must use the scale.
 
 ### Overlays
 
-- Use native `<dialog>` with a visible accessible title for modal tasks.
-  Keep focus inside while open, support Escape, and restore focus on close.
+- Use the controlled shadcn `Dialog` built on Base UI, with a visible accessible
+  title. Keep focus inside while open, support Escape, and restore focus on close.
 - Use `--surface-raised`, `--radius-lg`, `--shadow-overlay`, and `--backdrop`.
   Shadows communicate actual elevation only; no resting button/card shadows.
 - Bound width by `--reading-width` and viewport gutters; bound height by the

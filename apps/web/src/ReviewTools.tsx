@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { useAppState } from "./app-state.tsx";
 import { save, saved } from "./preferences.ts";
 
@@ -22,9 +23,10 @@ export function ReviewTools() {
   ).length;
   return (
     <section className="review-tools" aria-label="Review tools">
-      <button
+      <Button
         type="button"
         className="review-tools-toggle"
+        variant="ghost"
         aria-controls="review-tools-content"
         aria-expanded={!toolsCollapsed}
         aria-label={`${toolsCollapsed ? "Show" : "Hide"} review tools`}
@@ -34,42 +36,42 @@ export function ReviewTools() {
         <svg viewBox="0 0 16 16" aria-hidden="true">
           <path d={toolsCollapsed ? "m4 10 4-4 4 4" : "m4 6 4 4 4-4"} />
         </svg>
-      </button>
+      </Button>
       <div id="review-tools-content" hidden={toolsCollapsed}>
         <div className="copy-comments-bar">
           <div className="copy-comments-actions">
-            <button
+            <Button
               type="button"
               id="copy-unresolved"
-              className="button"
+              variant="outline"
               disabled={!unresolved}
               onClick={() => {
                 void review.copyCurrent(false);
               }}
             >
               Copy current unresolved
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               id="copy-all"
-              className="button"
+              variant="outline"
               disabled={!review.currentComments.length}
               onClick={() => {
                 void review.copyCurrent(true);
               }}
             >
               Copy current all
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="button"
+              variant="outline"
               disabled={!review.comments.length}
               onClick={() => {
                 void review.copy(true);
               }}
             >
               Copy all rounds
-            </button>
+            </Button>
           </div>
           <p id="comment-feedback" role="status" aria-live="polite">
             {review.feedback}
@@ -108,14 +110,16 @@ export function ReviewTools() {
             <span id="review-count">
               {allFiles.filter(isReviewed).length} of {allFiles.length} reviewed
             </span>
-            <button
+            <Button
               type="button"
               id="reset-reviewed"
+              variant="ghost"
+              size="xs"
               title="Clear reviewed files"
               onClick={resetReviewed}
             >
               Reset
-            </button>
+            </Button>
           </div>
         </div>
       </div>

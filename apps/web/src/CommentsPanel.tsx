@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { TabsContent } from "@/components/ui/tabs";
 import { useAppState } from "./app-state.tsx";
 import { DraftComment, ReviewCommentCard } from "./review.tsx";
 import { anchored } from "./review-model.ts";
@@ -5,7 +7,6 @@ import { anchored } from "./review-model.ts";
 export function CommentsPanel() {
   const {
     source: { repository },
-    navigation: { tab },
     draft,
     review,
     navigateComment,
@@ -16,10 +17,10 @@ export function CommentsPanel() {
   const currentRound = review.rounds.find((round) => round.current);
   const earlierRounds = review.rounds.filter((round) => !round.current);
   return (
-    <section
+    <TabsContent
+      value="comments"
       id="comments-panel"
       aria-label="Review comments"
-      hidden={tab !== "comments"}
     >
       <p className="comment-summary">
         {openComments} open · {review.comments.length - openComments} resolved
@@ -28,13 +29,13 @@ export function CommentsPanel() {
         (!anchored(draft, repository) ? (
           <DraftComment />
         ) : (
-          <button
+          <Button
             type="button"
-            className="button"
+            variant="outline"
             onClick={() => navigateComment(draft)}
           >
             Continue draft
-          </button>
+          </Button>
         ))}
       {currentRound && (
         <section className="review-round" aria-label="Current review">
@@ -73,6 +74,6 @@ export function CommentsPanel() {
           new review round; add comments from the Files tab.
         </p>
       )}
-    </section>
+    </TabsContent>
   );
 }

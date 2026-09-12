@@ -1,4 +1,14 @@
 import { isDiffMode } from "@serve-diff/shared";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Toggle } from "@/components/ui/toggle";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAppState } from "./app-state.tsx";
 import {
   DIFF_THEMES,
@@ -28,35 +38,35 @@ export function DiffToolbar() {
     files.length > 0 && files.every((file) => collapsed.has(file.path));
   return (
     <div className="toolbar">
-      <fieldset
+      <ToggleGroup
         id="diff-scope"
         className="segmented modes"
         aria-label="Diff scope"
         hidden={piped}
+        spacing={0}
+        variant="default"
+        size="sm"
+        value={[mode]}
+        onValueChange={(values) => {
+          const value = values[0];
+          if (value && isDiffMode(value)) changeMode(value);
+        }}
       >
         {["all", "staged", "unstaged"].map((value) => (
-          <button
-            key={value}
-            type="button"
-            data-mode={value}
-            aria-pressed={mode === value}
-            onClick={() => {
-              if (isDiffMode(value)) changeMode(value);
-            }}
-          >
+          <ToggleGroupItem key={value} value={value} data-mode={value}>
             {value === "all"
               ? "All changes"
               : value === "staged"
                 ? "Staged"
                 : "Unstaged"}
-          </button>
+          </ToggleGroupItem>
         ))}
-      </fieldset>
+      </ToggleGroup>
       <div className="toolbar-spacer" />
-      <button
+      <Button
         type="button"
         id="collapse-all"
-        className="quiet-button"
+        variant="ghost"
         title="Collapse or expand all files"
         onClick={() =>
           setCollapsed(
@@ -65,68 +75,83 @@ export function DiffToolbar() {
         }
       >
         {allCollapsed ? "Expand all" : "Collapse all"}
-      </button>
-      <button
-        type="button"
+      </Button>
+      <Toggle
         id="wrap"
-        className="quiet-button"
-        aria-pressed={wrap}
+        pressed={wrap}
         title="Wrap long lines"
-        onClick={() => setWrap(!wrap)}
+        onPressedChange={setWrap}
       >
         Wrap
-      </button>
-      <label
+      </Toggle>
+      <div
         className="toolbar-select"
         title="Highlight changed text within paired modified lines"
       >
-        <span>Inline</span>
-        <select
-          aria-label="Inline change detail"
+        <span id="inline-label">Inline</span>
+        <Select
           value={lineDiffType}
-          onChange={(event) =>
-            setLineDiffType(readLineDiffType(event.target.value))
-          }
+          onValueChange={(value) => {
+            if (value !== null) setLineDiffType(readLineDiffType(value));
+          }}
         >
-          {LINE_DIFF_TYPES.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="toolbar-select">
-        <span>Code theme</span>
-        <select
-          aria-label="Code theme"
+          <SelectTrigger aria-label="Inline change detail">
+            <SelectValue>
+              {LINE_DIFF_TYPES.find((option) => option.value === lineDiffType)
+                ?.label ?? lineDiffType}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {LINE_DIFF_TYPES.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="toolbar-select">
+        <span id="theme-label">Code theme</span>
+        <Select
           value={diffTheme}
-          onChange={(event) => setDiffTheme(readDiffTheme(event.target.value))}
+          onValueChange={(value) => {
+            if (value !== null) setDiffTheme(readDiffTheme(value));
+          }}
         >
-          {DIFF_THEMES.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <fieldset className="segmented" aria-label="Diff layout">
-        <button
-          type="button"
-          data-layout="split"
-          aria-pressed={layout === "split"}
-          onClick={() => setLayout("split")}
-        >
+          <SelectTrigger aria-label="Code theme">
+            <SelectValue>
+              {DIFF_THEMES.find((option) => option.value === diffTheme)
+                ?.label ?? diffTheme}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {DIFF_THEMES.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <ToggleGroup
+        className="segmented"
+        aria-label="Diff layout"
+        spacing={0}
+        variant="default"
+        size="sm"
+        value={[layout]}
+        onValueChange={(values) => {
+          const value = values[0];
+          if (value === "split" || value === "unified") setLayout(value);
+        }}
+      >
+        <ToggleGroupItem value="split" data-layout="split">
           Split
-        </button>
-        <button
-          type="button"
-          data-layout="unified"
-          aria-pressed={layout === "unified"}
-          onClick={() => setLayout("unified")}
-        >
+        </ToggleGroupItem>
+        <ToggleGroupItem value="unified" data-layout="unified">
           Unified
-        </button>
-      </fieldset>
+        </ToggleGroupItem>
+      </ToggleGroup>
     </div>
   );
 }

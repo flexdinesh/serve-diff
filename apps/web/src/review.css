@@ -32,7 +32,14 @@
   gap: var(--space-1);
   min-width: 0;
 }
-.sidebar-tabs button[aria-pressed] {
+.sidebar-tab-list {
+  align-self: stretch;
+  flex: 1;
+  height: auto;
+  min-width: 0;
+  padding: 0;
+}
+.sidebar-tabs [data-slot="tabs-trigger"] {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -53,7 +60,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.sidebar-tabs button[aria-pressed="true"] {
+.sidebar-tabs [data-slot="tabs-trigger"][data-active] {
   color: var(--fg);
   border-bottom-color: var(--accent);
 }
@@ -247,7 +254,7 @@
   gap: var(--space-2);
   flex-wrap: wrap;
 }
-.copy-comments-actions .button {
+.copy-comments-actions [data-slot="button"] {
   flex: 1 1 auto;
   justify-content: center;
   background: var(--bg);
@@ -352,9 +359,6 @@
   font-size: var(--text-xs);
   margin-right: auto;
 }
-.destructive-button {
-  color: var(--error);
-}
 .comment-location {
   text-align: left;
   color: var(--accent);
@@ -409,16 +413,6 @@
   color: var(--fg);
   box-sizing: border-box;
 }
-.primary-button {
-  background: var(--accent);
-  color: var(--on-accent);
-  border-color: var(--accent);
-}
-.primary-button:not(:disabled):hover,
-.primary-button:not(:disabled):active {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
 #comments-panel .comment-card,
 #comments-panel .comment-editor {
   margin: var(--space-2) 0;
@@ -441,9 +435,6 @@
   overflow: auto;
   padding: var(--space-6);
   box-shadow: var(--shadow-overlay);
-}
-.copy-dialog::backdrop {
-  background: var(--backdrop);
 }
 .copy-dialog p {
   color: var(--text-secondary);
@@ -493,26 +484,27 @@
 
 /* Enlarge app chrome, never Pierre's measured header or code-row slots. */
 @media (max-width: 760px), (pointer: coarse) {
-  .topbar .button,
-  .icon-button,
+  .topbar [data-slot="button"],
+  [data-slot="button"][data-size="icon"],
   .tree-control,
   .tree-folder,
   .file-row,
   .sidebar-tabs button,
   .review-tools-toggle,
   .review-progress button,
-  .copy-comments-actions .button,
+  .copy-comments-actions [data-slot="button"],
   .comment-actions button,
   .comment-location,
   .comment-card summary,
-  .copy-dialog .button,
-  .toolbar .quiet-button,
-  .toolbar select,
+  .copy-dialog [data-slot="button"],
+  .toolbar [data-slot="button"],
+  .toolbar [data-slot="toggle"],
+  .toolbar [data-slot="select-trigger"],
   .segmented button,
   .search-box {
     min-height: var(--touch-target);
   }
-  .icon-button,
+  [data-slot="button"][data-size="icon"],
   .tree-control,
   #refresh {
     min-width: var(--touch-target);
@@ -523,7 +515,7 @@
   .comment-editor textarea,
   .copy-dialog textarea,
   .search-box input,
-  .toolbar select {
+  .toolbar [data-slot="select-trigger"] {
     /* Prevent mobile input auto-zoom; code remains at its measured size. */
     font-size: var(--text-input-touch);
   }

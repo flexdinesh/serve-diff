@@ -1,4 +1,7 @@
 import { useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { togglePath, useAppState } from "./app-state.tsx";
 import { CommentsPanel } from "./CommentsPanel.tsx";
 import { FileNavigation } from "./file-navigation.tsx";
@@ -56,105 +59,111 @@ export function FileExplorerNav() {
       className={`sidebar${sidebar.collapsed ? " is-collapsed" : ""}${sidebar.open ? " open" : ""}`}
       aria-label="Changed files"
     >
-      <fieldset className="sidebar-tabs" aria-label="Sidebar view">
-        <button
-          type="button"
-          id="files-tab"
-          aria-pressed={tab === "files"}
-          onClick={() => setTab("files")}
-        >
-          <span className="sidebar-tab-label">Changes</span>
-          <span id="file-count" className="count">
-            {allFiles.length}
-          </span>
-        </button>
-        <button
-          type="button"
-          id="comments-tab"
-          aria-pressed={tab === "comments"}
-          onClick={() => setTab("comments")}
-        >
-          <span className="sidebar-tab-label">Comments</span>
-          <span id="comment-count" className="count">
-            {review.comments.length}
-          </span>
-        </button>
-        <button
-          type="button"
-          id="tree-toggle"
-          className="tree-control"
-          aria-label={`${foldersCollapsed ? "Expand" : "Collapse"} all folders`}
-          title={`${foldersCollapsed ? "Expand" : "Collapse"} all folders`}
-          disabled={folderPaths.length === 0}
-          onClick={() => {
-            const paths = new Set(foldersCollapsed ? [] : folderPaths);
-            if (filter) setFilteredClosed(paths);
-            else setClosed(paths);
-          }}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="3" y="3" width="15" height="15" rx="2" />
-            <path d="M7 10.5h7M21 7v12a2 2 0 0 1-2 2H7" />
-            {foldersCollapsed && <path d="M10.5 7v7" />}
-          </svg>
-        </button>
-      </fieldset>
-      <div id="file-panel" hidden={tab !== "files"}>
-        <div className="search-box">
-          <svg viewBox="0 0 16 16" aria-hidden="true">
-            <circle cx="7" cy="7" r="4.5" />
-            <path d="m10.5 10.5 3 3" />
-          </svg>
-          <input
-            ref={search}
-            id="search"
-            type="search"
-            placeholder="Filter files…"
-            aria-label="Filter files"
-            value={filter}
-            onChange={(event) => {
-              setFilter(event.target.value);
-              setFilteredClosed(new Set());
+      <Tabs
+        value={tab}
+        onValueChange={(value) => {
+          if (value === "files" || value === "comments") setTab(value);
+        }}
+        className="contents"
+      >
+        <div className="sidebar-tabs">
+          <TabsList
+            variant="line"
+            className="sidebar-tab-list"
+            aria-label="Sidebar view"
+          >
+            <TabsTrigger id="files-tab" value="files">
+              <span className="sidebar-tab-label">Changes</span>
+              <span id="file-count" className="count">
+                {allFiles.length}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger id="comments-tab" value="comments">
+              <span className="sidebar-tab-label">Comments</span>
+              <span id="comment-count" className="count">
+                {review.comments.length}
+              </span>
+            </TabsTrigger>
+          </TabsList>
+          <Button
+            type="button"
+            id="tree-toggle"
+            className="tree-control"
+            variant="ghost"
+            size="icon"
+            aria-label={`${foldersCollapsed ? "Expand" : "Collapse"} all folders`}
+            title={`${foldersCollapsed ? "Expand" : "Collapse"} all folders`}
+            disabled={folderPaths.length === 0}
+            onClick={() => {
+              const paths = new Set(foldersCollapsed ? [] : folderPaths);
+              if (filter) setFilteredClosed(paths);
+              else setClosed(paths);
             }}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="3" width="15" height="15" rx="2" />
+              <path d="M7 10.5h7M21 7v12a2 2 0 0 1-2 2H7" />
+              {foldersCollapsed && <path d="M10.5 7v7" />}
+            </svg>
+          </Button>
+        </div>
+        <TabsContent value="files" id="file-panel">
+          <div className="search-box">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="7" cy="7" r="4.5" />
+              <path d="m10.5 10.5 3 3" />
+            </svg>
+            <Input
+              ref={search}
+              id="search"
+              type="search"
+              placeholder="Filter files…"
+              aria-label="Filter files"
+              value={filter}
+              onChange={(event) => {
+                setFilter(event.target.value);
+                setFilteredClosed(new Set());
+              }}
+            />
+            <kbd>/</kbd>
+          </div>
+          <FileNavigation
+            files={files}
+            selected={activePath}
+            closed={filter ? filteredClosed : closed}
+            filtering={!!filter}
+            isReviewed={isReviewed}
+            commentCounts={commentCounts}
+            onToggle={(path) =>
+              (filter ? setFilteredClosed : setClosed)((previous) =>
+                togglePath(previous, path),
+              )
+            }
+            onSelect={selectFile}
           />
-          <kbd>/</kbd>
-        </div>
-        <FileNavigation
-          files={files}
-          selected={activePath}
-          closed={filter ? filteredClosed : closed}
-          filtering={!!filter}
-          isReviewed={isReviewed}
-          commentCounts={commentCounts}
-          onToggle={(path) =>
-            (filter ? setFilteredClosed : setClosed)((previous) =>
-              togglePath(previous, path),
-            )
-          }
-          onSelect={selectFile}
-        />
-        <div
-          id="git-legend"
-          className="git-legend"
-          title="Git staging indicators"
-          hidden={piped}
-        >
-          <span>
-            <i className="staging-dot staged" aria-hidden="true" />
-            Staged
-          </span>
-          <span>
-            <i className="staging-dot both" aria-hidden="true" />
-            Both
-          </span>
-          <span>
-            <i className="staging-dot unstaged" aria-hidden="true" />
-            Unstaged
-          </span>
-          <span title="Untracked file">U Untracked</span>
-        </div>
-      </div>
-      <CommentsPanel />
+          <div
+            id="git-legend"
+            className="git-legend"
+            title="Git staging indicators"
+            hidden={piped}
+          >
+            <span>
+              <i className="staging-dot staged" aria-hidden="true" />
+              Staged
+            </span>
+            <span>
+              <i className="staging-dot both" aria-hidden="true" />
+              Both
+            </span>
+            <span>
+              <i className="staging-dot unstaged" aria-hidden="true" />
+              Unstaged
+            </span>
+            <span title="Untracked file">U Untracked</span>
+          </div>
+        </TabsContent>
+        <CommentsPanel />
+      </Tabs>
       <ReviewTools />
       <div className="sidebar-footer">
         <span className="live-dot" />
