@@ -15,6 +15,14 @@ export function save(key: string, value: string): boolean {
   }
 }
 
+export function removeSaved(key: string) {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Storage is optional.
+  }
+}
+
 export function savedReviews(key: string): Map<string, string> {
   try {
     const data: unknown = JSON.parse(saved(key) ?? "[]");

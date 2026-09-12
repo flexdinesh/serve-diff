@@ -112,8 +112,8 @@ export function CommentsPanel() {
       {!review.comments.length && (
         <p className="comment-empty">
           Hover a code line and click + to leave feedback. Select several lines
-          to comment on a range. Saved comments stay in this browser and can be
-          copied for your coding agent.
+          to comment on a range. Saved comments persist through the local server
+          and can be copied for your coding agent.
         </p>
       )}
       {!!review.comments.length &&

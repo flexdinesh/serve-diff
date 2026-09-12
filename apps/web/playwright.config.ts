@@ -3,6 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 const port = 4173;
 
 export default defineConfig({
+  workers: 1,
   testDir: "./test/browser",
   outputDir: "test-results",
   use: {

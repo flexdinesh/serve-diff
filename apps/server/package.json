@@ -15,6 +15,7 @@
     "vite": "catalog:"
   },
   "devDependencies": {
+    "@serve-diff/api": "workspace:*",
     "@types/node": "catalog:",
     "typescript": "catalog:"
   }

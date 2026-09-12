@@ -4,10 +4,10 @@ import {
   parsePatchFiles,
   setLanguageOverride,
 } from "@pierre/diffs";
+import { api, errorDetail } from "@serve-diff/api";
 import {
   type ChangedFile,
   type DiffMode,
-  isDiffMode,
   type RepositoryDiff,
 } from "@serve-diff/shared";
 import {
@@ -20,47 +20,13 @@ import {
 import type { CommentAnnotation } from "./review-model.ts";
 import { languageOverride } from "./display-options.ts";
 
-function record(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-function isFile(value: unknown): value is ChangedFile {
-  return (
-    record(value) &&
-    typeof value.path === "string" &&
-    (value.oldPath === null || typeof value.oldPath === "string") &&
-    typeof value.status === "string" &&
-    typeof value.indexStatus === "string" &&
-    typeof value.worktreeStatus === "string" &&
-    typeof value.additions === "number" &&
-    typeof value.deletions === "number" &&
-    typeof value.binary === "boolean" &&
-    typeof value.fingerprint === "string"
-  );
-}
-function isSnapshot(value: unknown): value is RepositoryDiff {
-  return (
-    record(value) &&
-    typeof value.root === "string" &&
-    (value.source === undefined || value.source === "stdin") &&
-    typeof value.name === "string" &&
-    typeof value.branch === "string" &&
-    (value.head === null || typeof value.head === "string") &&
-    isDiffMode(value.mode) &&
-    typeof value.revision === "string" &&
-    Array.isArray(value.files) &&
-    value.files.every(isFile)
-  );
-}
-async function getJson(url: string, signal: AbortSignal): Promise<unknown> {
-  const response = await fetch(url, { signal });
-  const body: unknown = await response.json();
-  if (!response.ok)
-    throw new Error(
-      record(body) && typeof body.error === "string"
-        ? body.error
-        : "Unable to load changes",
-    );
-  return body;
+async function getDiff(mode: DiffMode, signal: AbortSignal) {
+  const { data, error } = await api.GET("/api/v1/diffs/current", {
+    params: { query: { scope: mode } },
+    signal,
+  });
+  if (!data) throw new Error(errorDetail(error, "Unable to load changes"));
+  return data;
 }
 function messageItem(
   file: ChangedFile,
@@ -121,8 +87,7 @@ export function useDiff(mode: DiffMode, composing: boolean) {
       busy = true;
       setState((previous) => ({ ...previous, busy: true }));
       try {
-        const data = await getJson(`/api/diff?mode=${mode}`, signal);
-        if (!isSnapshot(data)) throw new Error("Invalid repository response");
+        const data: RepositoryDiff = await getDiff(mode, signal);
         if (signal.aborted || disposed) return;
         if (!force && !retry && current?.revision === data.revision) {
           setState((previous) => ({
@@ -168,23 +133,23 @@ export function useDiff(mode: DiffMode, composing: boolean) {
             const file = pending[next++];
             if (!file) continue;
             try {
-              const body = await getJson(
-                `/api/file?${new URLSearchParams({ mode, path: file.path, version: file.fingerprint })}`,
-                signal,
+              const { data: body, error } = await api.GET(
+                "/api/v1/diffs/{diffId}/files/{fileId}/patch",
+                {
+                  params: {
+                    path: { diffId: data.revision, fileId: file.id },
+                    query: {
+                      scope: mode,
+                      fileVersion: file.fingerprint,
+                    },
+                  },
+                  signal,
+                },
               );
-              if (
-                !record(body) ||
-                typeof body.patch !== "string" ||
-                !(body.message === null || typeof body.message === "string")
-              )
-                throw new Error("Invalid patch response");
+              if (!body)
+                throw new Error(errorDetail(error, "Unable to load diff"));
               if (signal.aborted || disposed) return;
-              const contents =
-                record(body.contents) &&
-                typeof body.contents.before === "string" &&
-                typeof body.contents.after === "string"
-                  ? { before: body.contents.before, after: body.contents.after }
-                  : null;
+              const contents = body.contents ?? null;
               loadedBytes +=
                 body.patch.length +
                 (contents?.before.length ?? 0) +

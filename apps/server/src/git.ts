@@ -9,6 +9,7 @@ import type {
   FilePatch,
   RepositoryDiff,
 } from "@serve-diff/shared";
+import { type DiffSource, RequestError } from "./source.ts";
 
 const execute = promisify(execFile);
 const MAX_PATCH_BYTES = 2 * 1024 * 1024;
@@ -20,14 +21,6 @@ const patchFormat = [
   "--output-indicator-old=-",
   "--output-indicator-context= ",
 ];
-
-export class RequestError extends Error {
-  status: number;
-  constructor(status: number, message: string) {
-    super(message);
-    this.status = status;
-  }
-}
 
 // Git receives argument arrays and literal pathspecs; filenames never become shell code.
 async function git(root: string, args: string[], maxBuffer = 16 * 1024 * 1024) {
@@ -81,6 +74,7 @@ function parseRaw(raw: string): Map<string, ChangedFile> {
       throw new Error("Invalid Git file record");
     if (files.get(path)?.status === "U") continue;
     files.set(path, {
+      id: digest(path),
       path,
       oldPath: path === firstPath ? null : firstPath,
       status,
@@ -279,6 +273,7 @@ export async function openRepository(directory: string) {
       }
       if (files.has(path)) continue;
       files.set(path, {
+        id: digest(path),
         path,
         oldPath: null,
         status: "?",
@@ -326,6 +321,7 @@ export async function openRepository(directory: string) {
       a.path.localeCompare(b.path),
     );
     return {
+      source: "local",
       root,
       name: basename(root),
       branch,
@@ -466,7 +462,15 @@ export async function openRepository(directory: string) {
       throw new RequestError(400, "Full text is unavailable for binary files");
     return { before, after };
   }
-  return { root, snapshot, patch, contents };
+  return {
+    root,
+    kind: "local",
+    scopes: ["all", "staged", "unstaged"],
+    live: true,
+    snapshot,
+    patch,
+    contents,
+  } satisfies DiffSource;
 }
 
-export type Repository = Awaited<ReturnType<typeof openRepository>>;
+export type Repository = DiffSource;

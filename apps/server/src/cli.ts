@@ -46,7 +46,7 @@ try {
     });
     const browserError = await openBrowser(server.addresses.localhost);
     console.log(
-      `\n  serve-diff\n  Local    ${server.addresses.localhost}\n  All      ${server.addresses.all}\n  Network  ${server.addresses.network ?? "unavailable"}\n  ${piped ? "Piped diff · fixed snapshot" : server.root}\n\n  Press Ctrl+C to stop.\n`,
+      `\n  serve-diff\n  Local    ${server.addresses.localhost}\n  All      ${server.addresses.all}\n  Network  ${server.addresses.network ?? "unavailable"}\n  API token  ${server.token}\n  ${piped ? "Piped diff · fixed snapshot" : server.root}\n\n  Press Ctrl+C to stop.\n`,
     );
     if (browserError) console.warn(`serve-diff: ${browserError}`);
     let closing = false;

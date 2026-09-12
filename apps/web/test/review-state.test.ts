@@ -4,6 +4,7 @@ import type { ChangedFile } from "@serve-diff/shared";
 import { toggleReviewedFileState } from "../src/review-state.ts";
 
 const file: ChangedFile = {
+  id: "src-file",
   path: "src/file.ts",
   oldPath: null,
   status: "M",

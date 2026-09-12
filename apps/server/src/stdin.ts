@@ -7,7 +7,7 @@ import type {
   FilePatch,
   RepositoryDiff,
 } from "@serve-diff/shared";
-import { type Repository, RequestError } from "./git.ts";
+import { type DiffSource, RequestError } from "./source.ts";
 
 const MAX_INPUT_BYTES = 16 * 1024 * 1024;
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
@@ -29,7 +29,7 @@ export async function readPatchInput(input: Readable): Promise<string> {
 
 // Git headers are unprefixed; hunk contents always start with space, +, or -.
 // Split commit boundaries before file boundaries to avoid swallowing later commits.
-export function openPatch(input: string): Repository {
+export function openPatch(input: string): DiffSource {
   if (Buffer.byteLength(input) > MAX_INPUT_BYTES)
     throw new Error("Piped diff exceeds the 16 MiB input limit");
   const data = stripVTControlCharacters(input);
@@ -74,6 +74,7 @@ export function openPatch(input: string): Repository {
       const binary = /^(Binary files .* differ|GIT binary patch)$/m.test(patch);
       const fingerprint = createHash("sha256").update(patch).digest("hex");
       files.push({
+        id: createHash("sha256").update(path).digest("hex"),
         path,
         oldPath: file.prevName ? `${prefix}${file.prevName}` : null,
         status:
@@ -131,6 +132,9 @@ export function openPatch(input: string): Repository {
   };
   return {
     root,
+    kind: "stdin",
+    scopes: ["all"],
+    live: false,
     async snapshot(mode) {
       if (mode !== "all")
         throw new RequestError(

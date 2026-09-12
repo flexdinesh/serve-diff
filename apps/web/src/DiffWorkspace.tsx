@@ -9,6 +9,7 @@ import {
   type CodeViewReactOptions,
   useWorkerPool,
 } from "@pierre/diffs/react";
+import { api, errorDetail } from "@serve-diff/api";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { togglePath, useAppState } from "./app-state.tsx";
@@ -75,24 +76,20 @@ async function loadDiffFiles(
 ) {
   const file = repository.files.find((entry) => entry.path === fileDiff.name);
   if (!file) throw new Error("File is no longer in this diff");
-  const response = await fetch(
-    `/api/contents?${new URLSearchParams({
-      mode: repository.mode,
-      path: file.path,
-      version: file.fingerprint,
-    })}`,
+  const { data: body, error } = await api.GET(
+    "/api/v1/diffs/{diffId}/files/{fileId}/contents",
+    {
+      params: {
+        path: { diffId: repository.revision, fileId: file.id },
+        query: {
+          scope: repository.mode,
+          fileVersion: file.fingerprint,
+        },
+      },
+    },
   );
-  const body: unknown = await response.json();
-  if (
-    typeof body !== "object" ||
-    body === null ||
-    !("before" in body) ||
-    typeof body.before !== "string" ||
-    !("after" in body) ||
-    typeof body.after !== "string"
-  )
-    throw new Error("Unable to load full file context");
-  if (!response.ok) throw new Error("Unable to load full file context");
+  if (!body)
+    throw new Error(errorDetail(error, "Unable to load full file context"));
   return {
     oldFile: {
       name: file.oldPath ?? file.path,
