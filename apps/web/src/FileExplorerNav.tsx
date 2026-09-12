@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -42,10 +43,10 @@ export function FileExplorerNav() {
       .every((path) => (filter ? filteredClosed : closed).has(path));
   const commentCounts = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const comment of review.comments)
+    for (const comment of review.currentComments)
       counts.set(comment.path, (counts.get(comment.path) ?? 0) + 1);
     return counts;
-  }, [review.comments]);
+  }, [review.currentComments]);
   const connection = !diff.connected
     ? diff.busy && !repository
       ? "Connecting…"
@@ -57,7 +58,9 @@ export function FileExplorerNav() {
     <aside
       id="sidebar"
       className={`sidebar${sidebar.collapsed ? " is-collapsed" : ""}${sidebar.open ? " open" : ""}`}
-      aria-label="Changed files"
+      role={sidebar.mobile && sidebar.open ? "dialog" : undefined}
+      aria-label="Review navigation"
+      aria-modal={sidebar.mobile && sidebar.open ? "true" : undefined}
     >
       <Tabs
         value={tab}
@@ -106,6 +109,16 @@ export function FileExplorerNav() {
               {foldersCollapsed && <path d="M10.5 7v7" />}
             </svg>
           </Button>
+          <Button
+            type="button"
+            className="tree-control mobile-only"
+            variant="ghost"
+            size="icon"
+            aria-label="Close review sidebar"
+            onClick={sidebar.closeMobile}
+          >
+            <XIcon aria-hidden="true" />
+          </Button>
         </div>
         <TabsContent value="files" id="file-panel">
           <div className="search-box">
@@ -125,8 +138,13 @@ export function FileExplorerNav() {
                 setFilteredClosed(new Set());
               }}
             />
-            <kbd>/</kbd>
+            <kbd>Alt+/</kbd>
           </div>
+          <p className="visually-hidden" role="status" aria-live="polite">
+            {filter
+              ? `${files.length} of ${allFiles.length} changed files shown`
+              : ""}
+          </p>
           <FileNavigation
             files={files}
             selected={activePath}
@@ -168,7 +186,7 @@ export function FileExplorerNav() {
       <div className="sidebar-footer">
         <span className="live-dot" />
         <span id="connection">{connection}</span>
-        <span className="read-only">Read-only</span>
+        <span className="read-only">Git unchanged</span>
       </div>
     </aside>
   );

@@ -26,6 +26,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -96,18 +97,30 @@ export function CommentEditor({
   onCancel: () => void;
 }) {
   const input = useRef<HTMLTextAreaElement>(null);
+  const inputId = useId();
+  const errorId = useId();
+  const [error, setError] = useState("");
   const id = draft.id;
   useEffect(() => {
     if (!id) return;
     input.current?.focus({ preventScroll: true });
     input.current?.scrollIntoView({ block: "nearest" });
   }, [id]);
+  function saveComment() {
+    if (!draft.body.trim()) {
+      setError("Enter a comment before saving.");
+      input.current?.focus();
+      return;
+    }
+    setError("");
+    onSave();
+  }
   return (
     <form
       className="comment-editor-form"
       onSubmit={(event) => {
         event.preventDefault();
-        onSave();
+        saveComment();
       }}
     >
       <Card size="sm" className="comment-editor">
@@ -120,13 +133,21 @@ export function CommentEditor({
           </CardTitle>
         </CardHeader>
         <CardContent className="comment-editor-content">
+          <label className="comment-editor-label" htmlFor={inputId}>
+            Review comment
+          </label>
           <Textarea
+            id={inputId}
             ref={input}
             placeholder="Leave a review comment…"
-            aria-label="Review comment"
+            aria-invalid={!!error}
+            aria-describedby={error ? errorId : undefined}
             rows={3}
             value={draft.body}
-            onChange={(event) => onChange(event.target.value)}
+            onChange={(event) => {
+              if (event.target.value.trim()) setError("");
+              onChange(event.target.value);
+            }}
             onKeyDown={(event) => {
               event.stopPropagation();
               if (event.key === "Escape") {
@@ -135,10 +156,15 @@ export function CommentEditor({
               }
               if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
                 event.preventDefault();
-                onSave();
+                saveComment();
               }
             }}
           />
+          {!!error && (
+            <p id={errorId} className="comment-editor-error" role="alert">
+              {error}
+            </p>
+          )}
         </CardContent>
         <CardFooter className="comment-actions">
           <span>⌘ / Ctrl + Enter to save</span>
@@ -146,7 +172,7 @@ export function CommentEditor({
             <XIcon aria-hidden="true" />
             Cancel
           </Button>
-          <Button type="submit" disabled={!draft.body.trim()}>
+          <Button type="submit">
             <SendIcon aria-hidden="true" />
             Save comment
           </Button>
@@ -179,6 +205,7 @@ export function CommentCard({
 }) {
   const resolved = comment.status === "resolved";
   const [expanded, setExpanded] = useState(!resolved);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const contentId = useId();
   useEffect(() => setExpanded(!resolved), [comment.id, resolved]);
   return (
@@ -289,7 +316,7 @@ export function CommentCard({
               type="button"
               variant="destructive"
               size={sidebar ? "xs" : "default"}
-              onClick={() => onDelete(comment)}
+              onClick={() => setConfirmDelete(true)}
             >
               <Trash2Icon aria-hidden="true" />
               Delete
@@ -297,6 +324,39 @@ export function CommentCard({
           </CardFooter>
         </div>
       </Card>
+      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <DialogContent
+          className="delete-comment-dialog"
+          showCloseButton={false}
+        >
+          <DialogTitle>Delete comment?</DialogTitle>
+          <DialogDescription>
+            This removes the comment from your local review. This cannot be
+            undone.
+          </DialogDescription>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmDelete(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="delete-comment-confirm"
+              variant="destructive"
+              onClick={() => {
+                onDelete(comment);
+                setConfirmDelete(false);
+              }}
+            >
+              <Trash2Icon aria-hidden="true" />
+              Delete comment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </article>
   );
 }

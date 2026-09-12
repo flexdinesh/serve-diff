@@ -61,17 +61,17 @@ export function Header() {
       <Separator className="header-divider" orientation="vertical" />
       <div className="header-heading">
         <div className="header-title">
-          <h1 id="changes-title">{piped ? "Piped diff" : "Local diff"}</h1>
-          {!piped && (
-            <span id="repo-name">{repository?.name ?? "Local repository"}</span>
-          )}
+          <h1 id="changes-title">
+            {piped ? "Piped diff" : (repository?.name ?? "Local changes")}
+          </h1>
+          {!piped && <span id="repo-name">Local changes</span>}
         </div>
         <p
           id="repo-path"
           title={piped ? "Re-run your command to update" : repository?.root}
         >
           {piped
-            ? "Read from stdin · Re-run your command to update"
+            ? "From stdin · Git unchanged"
             : (repository?.root ?? "Reading your repository…")}
         </p>
       </div>
@@ -81,17 +81,16 @@ export function Header() {
         ) : (
           <GitBranchIcon className="size-(--icon-base)!" />
         )}
-        <span id="branch">{repository?.branch ?? "—"}</span>
-      </Badge>
-      <Badge variant="secondary" className="local-badge">
-        <span /> Local only
+        <span id="branch">
+          {piped ? "Fixed snapshot" : (repository?.branch ?? "—")}
+        </span>
       </Badge>
       <Button
         type="button"
         id="refresh"
         variant="outline"
         aria-label="Refresh changes"
-        title="Refresh changes (R)"
+        title="Refresh changes (Alt+R)"
         hidden={piped}
         aria-busy={diff.busy}
         onClick={diff.refresh}

@@ -85,8 +85,8 @@ measured elements or replace the application tokens with framework defaults.
 | Primary text                  | `--fg`             | File names, headings, review content                               |
 | Secondary text                | `--text-secondary` | Supporting prose and available secondary actions                   |
 | Muted text                    | `--muted`          | Paths, counts, captions; still readable, never disabled by default |
-| Separator                     | `--border`         | Pane dividers and low-emphasis grouping                            |
-| Control boundary              | `--border`         | Inputs, outlined buttons, and resting interactive boundaries       |
+| Separator                     | `--border-muted`   | Pane dividers and low-emphasis grouping                            |
+| Control boundary              | `--border-control` | Inputs, outlined buttons, and resting interactive boundaries       |
 | Emphasized boundary           | `--border-strong`  | Rare boundaries requiring emphasis beyond focus or error styling   |
 | Neutral hover                 | `--hover`          | Available controls under the pointer, compact count surfaces       |
 | Accent                        | `--accent`         | Selection, focus, navigation links, primary commit action          |
@@ -117,12 +117,13 @@ and captured context. Keep the root at `100%` to respect browser font preference
 
 | Style               | Size token (default px) | Weight / leading      | Use                                             |
 | ------------------- | ----------------------- | --------------------- | ----------------------------------------------- |
-| Page/overlay title  | `--text-xl` (18)        | semibold / UI         | Empty states, dialogs, brand wordmark           |
+| Page/overlay title  | `--text-xl` (20)        | semibold / UI         | Empty states and dialogs                        |
 | Workspace heading   | `--text-md` (14)        | semibold / UI         | Compact header title, future section headings   |
 | Review body         | `--text-md` (14)        | normal / copy         | Comments, explanations, editor text             |
-| UI body / label     | `--text-base` (13)      | normal or medium / UI | Buttons, tabs, file navigation                  |
-| Small body / action | `--text-sm` (12)        | normal or medium / UI | Toolbar actions, select labels, comment actions |
-| Metadata / caption  | `--text-xs` (11)        | normal / UI           | Paths, counts, footer, state labels             |
+| UI body / label     | `--text-base` (14)      | normal or medium / UI | Buttons, tabs, file navigation                  |
+| Small body / action | `--text-sm` (13)        | normal or medium / UI | Toolbar actions, select labels, comment actions |
+| Metadata / caption  | `--text-xs` (12)        | normal / UI           | Paths, counts, footer, state labels             |
+| Code                | `--text-code` (13)      | normal / code         | Pierre rows; measured independently from UI     |
 
 - Weights: `--weight-normal`, `--weight-medium`, `--weight-semibold` (400/500/600).
   Do not introduce incidental 550/650 weights.
@@ -143,8 +144,10 @@ and captured context. Keep the root at `100%` to respect browser font preference
 
 ## Spacing
 
-Use the rem-based 4px scale: `--space-1`, `--space-2`, `--space-3`, `--space-4`,
-`--space-6`, `--space-8`, `--space-12` → 4, 8, 12, 16, 24, 32, 48px by default.
+Use the rem-based scale: `--space-0-5`, `--space-1`, `--space-1-5`, `--space-2`,
+`--space-3`, `--space-4`, `--space-6`, `--space-8`, `--space-12`, `--space-16`
+→ 2, 4, 6, 8, 12, 16, 24, 32, 48, 64px by default. Keep 2/6px for compact
+component internals; layout remains aligned to the 4px rhythm.
 
 | Relationship                           | Rule                                      |
 | -------------------------------------- | ----------------------------------------- |
@@ -157,8 +160,8 @@ Use the rem-based 4px scale: `--space-1`, `--space-2`, `--space-3`, `--space-4`,
 | Dialog padding                         | 24                                        |
 | Large conceptual separation            | 32 or 48, rarely needed in review chrome  |
 
-Use `--page-gutter` for header, toolbar, notices, and footer: 24 desktop, 16 at
-1000px and below, 12 at 760px and below. Do not independently center those regions.
+Use `--page-gutter` for header, toolbar, notices, and footer: 24 desktop, 16 below
+1012px, 12 below 768px. Do not independently center those regions.
 Use explicit margins instead of relying on browser-default paragraph spacing.
 
 Custom values are acceptable only for documented optical or renderer geometry:
@@ -170,9 +173,9 @@ such detail into a token. New layout spacing must use the scale.
 
 - Use a full-width application shell, not a centered marketing container.
   The diff receives all width remaining after navigation.
-- Header: `--topbar-height` (64). Toolbar and sidebar tabs: `--toolbar-height`
+- Header: `--topbar-height` (56 desktop, 48 narrow). Toolbar and sidebar tabs: `--toolbar-height`
   (44) as the desktop baseline; allow toolbar height to grow when controls wrap.
-- Desktop sidebar: `--sidebar-width` defaults to 280px. `use-sidebar.ts` owns
+- Desktop sidebar: `--sidebar-width` defaults to 330px. `use-sidebar.ts` owns
   the user's pixel width, bounded to 200–520px and available viewport space.
   Do not add competing CSS defaults or override a saved width at tablet sizes.
 - Sidebar interiors share a 16px inset. Tree rows use 8px base padding plus
@@ -207,12 +210,13 @@ such detail into a token. New layout spacing must use the scale.
 
 ## Borders, radii, and shadows
 
-- Use 1px `--border` for separators and resting control boundaries. Reserve
-  `--border-strong` for exceptional emphasis; focus and errors use their semantic
-  tokens. Do not stack a card border inside another bordered panel unless it
+- Use 1px `--border-muted` for separators and `--border-control` for interactive
+  boundaries requiring 3:1 contrast. Reserve `--border-strong` for exceptional
+  emphasis; focus and errors use their semantic tokens. Do not stack a card
+  border inside another bordered panel unless it
   represents an independent review object.
-- `--radius-sm` (4) is for rows, badges, and compact controls;
-  `--radius-md` (6) for standard controls; `--radius-lg` (8) for sidebar comments
+- `--radius-sm` (3) is for rows, badges, and compact controls;
+  `--radius-md` (6) for standard controls; `--radius-lg` (12) for sidebar comments
   and dialogs. Inline review annotations remain square. Circles are reserved for
   dots and small status marks.
 - `--shadow-overlay` is the single elevation treatment for drawers/dialogs.
@@ -256,12 +260,17 @@ such detail into a token. New layout spacing must use the scale.
 - Review comments and editors use the shared shadcn `Card` composition. Inline
   cards use a complete subtle border, `--radius-md`, generous outer spacing, and
   no shadow; sidebar cards use `--radius-lg`. Separate card regions with a raised
-  body surface, accent-tinted header, and neutral action row; keep status at the
+  body surface, neutral header, and neutral action row; reserve accent tint for
+  active editors and selections. Keep status at the
   header's trailing edge and use compact labeled icons for state and actions.
 - Comment actions and each file's viewed control use standard button sizing.
   Comment status badges match the same control height.
 - Resolved comments collapse to their header by default. A labeled chevron
   expands the body and actions; reopening restores the expanded open state.
+- Comment views default to open comments and offer Open, Resolved, and All filters.
+  Export uses one primary `Copy review` action plus a menu for broader scopes.
+- Keep `Save comment` enabled; empty submission focuses the labeled editor and
+  shows an inline error. Deleting a saved comment requires explicit confirmation.
 - Tint every old/new diff row covered by a visible comment, including its
   gutter and multi-line range. Use a stronger green/red tint for addition and
   deletion rows; reserve `--review-anchor` yellow for unchanged context. Mix
@@ -286,40 +295,41 @@ such detail into a token. New layout spacing must use the scale.
   Shadows communicate actual elevation only; no resting button/card shadows.
 - Bound width by `--reading-width` and viewport gutters; bound height by the
   dynamic viewport and allow internal scrolling. Long XML must remain selectable.
-- Mobile navigation is a temporary sidebar, not a newly invented modal workflow.
+- Navigation below 1012px is a modal drawer with backdrop, focus containment,
+  explicit close, inert background, Escape support, and focus restoration.
 
 ## Interaction states
 
-| State    | Expectation                                                                                        |
-| -------- | -------------------------------------------------------------------------------------------------- |
-| Hover    | Neutral surface feedback on available actions; preserve selected styling                           |
-| Focus    | `--focus-ring` with `--focus-offset`; never rely on hover or color alone                           |
-| Active   | Immediate surface feedback; filled primary uses `--accent-hover`                                   |
-| Selected | Persistent accent surface/underline plus `aria-current` or `aria-pressed`                          |
-| Disabled | Native `disabled`, subdued opacity, no hover, no pointer cursor                                    |
-| Loading  | `aria-busy`, status text where needed, stable size; refresh uses a progress cursor/dashed boundary |
-| Error    | `--error` plus a readable explanation and recovery action where applicable                         |
+| State    | Expectation                                                                         |
+| -------- | ----------------------------------------------------------------------------------- |
+| Hover    | Neutral surface feedback on available actions; preserve selected styling            |
+| Focus    | `--focus-ring` with `--focus-offset`; never rely on hover or color alone            |
+| Active   | Immediate surface feedback; filled primary uses `--accent-hover`                    |
+| Selected | Persistent accent surface/underline plus `aria-current` or `aria-pressed`           |
+| Disabled | Native `disabled`, subdued opacity, no hover, no pointer cursor                     |
+| Loading  | `aria-busy`, status text, stable size, progress cursor, reduced-motion-safe spinner |
+| Error    | `--error` plus a readable explanation and recovery action where applicable          |
 
 Do not add motion for decoration. New animation must honor
 `prefers-reduced-motion`; feedback must still work without animation.
 
 ## Responsive design
 
-- Keep the existing thresholds: 1000px for tighter gutters; 760px for mobile
-  navigation. Synchronize the mobile threshold with `use-sidebar.ts`.
-- Wrap toolbar groups before they collide, including on desktop with a wide
-  sidebar. Keep scope before display preferences; preserve DOM/keyboard order.
+- Use 1012px for drawer navigation/tighter gutters and 768px for compact mobile
+  chrome. Synchronize drawer behavior with `use-sidebar.ts`.
+- Keep scope and desktop layout choice visible. Put wrap, collapse-all, inline
+  detail, code theme, and narrow layout choice in View options.
 - Mobile hides secondary repository/branch chrome and the refresh text, not its
   accessible label. Keep the current file task and theme/sidebar controls available.
-- Collapse navigation to the existing toggle-controlled overlay; its width is
+- Collapse navigation to the toggle-controlled modal drawer; its width is
   `min(320px, 88vw)`. Keep file selection, comments, and export reachable there.
 - Hide redundant summary/shortcut detail before removing essential actions.
 - At mobile widths or coarse pointers, app-owned controls target 44px hit heights;
   icon controls also reach 44px width. Text-input sizing uses `--text-input-touch`.
 - Pierre code rows and header slots retain measured geometry. Larger library
   gutter/header targets need a coordinated renderer-metric change, not a CSS override.
-- Preserve the user's split/unified and wrap preferences. Narrow screens can use
-  unified view, but do not silently change persisted choices for visual reasons.
+- Preserve the desktop split/unified and wrap preferences. Default narrow screens
+  to unified without overwriting the desktop preference; allow a session override.
 - Test narrow and short viewports, long paths/comments, expanded navigation,
   wrapped controls, and enlarged browser fonts. Shrinking text is not a fix.
 
@@ -328,8 +338,9 @@ Do not add motion for decoration. New animation must honor
 - Meet WCAG AA: at least 4.5:1 for normal text and 3:1 for meaningful control
   boundaries, focus indicators, and large text. Check actual adjacent surfaces
   in both themes, including selected and elevated surfaces.
-- Use real buttons, inputs, selects, summaries, and dialogs. Preserve keyboard
-  shortcuts, tree navigation, sidebar resizing, and Pierre's interaction model.
+- Use real buttons, inputs, selects, summaries, and dialogs. Modifier-based
+  keyboard shortcuts avoid single-character activation conflicts. Preserve tree
+  navigation, sidebar resizing, and Pierre's interaction model.
 - Every icon-only action needs a name. Every form field needs a label. Connect
   dialog titles and validation messages programmatically.
 - Focus must remain visible inside scrollable panes and on slotted review controls.
@@ -372,13 +383,13 @@ This audit records the starting points, not permission to reuse legacy values.
 | Type             | System sans/mono; 9, 10, 11, 12, 13, 14, 15, 17, 18px; 400/550/600/650/700 weights          | Five UI sizes; three weights; separate functional touch-input size             |
 | Leading/tracking | Browser defaults, 18/13 tree, 22/13 code, 1.5/1.6/1.7 prose; −0.6px and 1.1px tracking      | Explicit UI/copy leading, semantic tracking; preserve measured code leading    |
 | Spacing          | Repeated 3/5/6/7/9/10/11/14/15/17/18/20/22px padding, margins, gaps mixed with 4/8/12/16/24 | 4px rhythm; documented optical exceptions only                                 |
-| Radii            | 3, 4, 5, 6, 7, 8, 10px plus circles                                                         | 4/6/8px roles; circles only for dots/checks                                    |
+| Radii            | 3, 4, 5, 6, 7, 8, 10px plus circles                                                         | 3/6/12px roles; circles only for dots/checks                                   |
 | Shadows          | Tiny button and segmented shadows; sidebar shadow; dialog backdrop                          | One overlay shadow; retain non-geometric inset diff divider                    |
-| Geometry         | Header 58px, toolbar 40px; 24/28/30px icon controls and content-sized buttons               | 64/44px shell rhythm, 32px controls, 24px Pierre slots, 44px touch targets     |
+| Geometry         | Header 58px, toolbar 40px; 24/28/30px icon controls and content-sized buttons               | 56/44px shell rhythm, 32px controls, 24px Pierre slots, 44px touch targets     |
 | Width/gutters    | Competing 260/220/280px sidebar rules; 10/12/14/22/24px gutters; 680px dialog               | One user-owned sidebar width; shared responsive gutter and reading-width roles |
 | Review           | Inline 12×14px padding versus sidebar/mobile 10px; 85px editor, 300px XML area              | Shared 12px comment inset, readable editor, viewport-bounded overlay           |
 | States           | Search removed input focus; textarea/select lacked shared focus; reviewed rows faded to 55% | Group/field focus, readable reviewed state, explicit destructive action        |
-| Responsive       | 1000/760px breakpoints; toolbar wrapped only below 760px                                    | Retain thresholds, allow wrapping whenever needed, enlarge touch chrome        |
+| Responsive       | 1000/760px breakpoints; toolbar wrapped only below 760px                                    | 1012px drawer, 768px compact chrome, unified narrow default                    |
 
 ### Decisions needing product judgment
 

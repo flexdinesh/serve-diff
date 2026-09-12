@@ -42,6 +42,9 @@ function usePageState() {
   const [layout, setLayout] = useState<"split" | "unified">(() =>
     saved("layout") === "unified" ? "unified" : "split",
   );
+  const [narrowLayout, setNarrowLayout] = useState<"split" | "unified" | null>(
+    null,
+  );
   const [themePreference, setThemePreference] = useState(() =>
     readThemePreference(saved(THEME_STORAGE_KEY)),
   );
@@ -81,6 +84,7 @@ function usePageState() {
   const repository = diff.repository;
   const review = useReview(repository, draft, setDraft);
   const sidebar = useSidebar();
+  const effectiveLayout = sidebar.mobile ? (narrowLayout ?? "unified") : layout;
   const viewer = useRef<CodeViewHandle<CommentAnnotation, undefined>>(null);
   const search = useRef<HTMLInputElement>(null);
   const piped = repository?.source === "stdin";
@@ -270,17 +274,20 @@ function usePageState() {
           ) ||
         event.metaKey ||
         event.ctrlKey ||
-        event.altKey
+        !event.altKey
       )
         return;
-      if (event.key === "/") {
+      if (event.code === "Slash") {
         event.preventDefault();
         sidebar.show();
         setTab("files");
         requestAnimationFrame(() => search.current?.focus());
       }
-      if (event.key.toLowerCase() === "r") diff.refresh();
-      if (event.key === "j" || event.key === "k") {
+      if (event.code === "KeyR") {
+        event.preventDefault();
+        diff.refresh();
+      }
+      if (event.code === "KeyJ" || event.code === "KeyK") {
         event.preventDefault();
         const index = Math.max(
           0,
@@ -290,7 +297,10 @@ function usePageState() {
           files[
             Math.max(
               0,
-              Math.min(files.length - 1, index + (event.key === "j" ? 1 : -1)),
+              Math.min(
+                files.length - 1,
+                index + (event.code === "KeyJ" ? 1 : -1),
+              ),
             )
           ];
         if (file) selectFile(file.path);
@@ -306,8 +316,11 @@ function usePageState() {
       theme,
       themePreference,
       setThemePreference,
-      layout,
-      setLayout,
+      layout: effectiveLayout,
+      setLayout: (value: "split" | "unified") => {
+        if (sidebar.mobile) setNarrowLayout(value);
+        else setLayout(value);
+      },
       wrap,
       setWrap,
       diffTheme,

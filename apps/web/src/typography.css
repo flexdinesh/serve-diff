@@ -5,15 +5,18 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   /* Dense chrome, readable review prose, restrained headings. */
-  --text-xs: 0.6875rem;
-  --text-sm: 0.75rem;
-  --text-base: 0.8125rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
   --text-md: 0.875rem;
+  --text-lg: 1rem;
   --text-input-touch: 1rem;
-  --text-xl: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-code: 0.8125rem;
   --weight-normal: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
+  --weight-bold: 700;
   --leading-ui: 1.4;
   --leading-copy: 1.5;
   --tracking-heading: -0.02em;
@@ -27,6 +30,6 @@
   --icon-base: 1rem;
   --icon-lg: 1.25rem;
 
-  --leading-tree: calc(18 / 13);
+  --leading-tree: calc(20 / 14);
   --leading-code: calc(22 / 13);
 }

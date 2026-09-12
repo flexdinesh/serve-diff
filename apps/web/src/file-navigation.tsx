@@ -149,6 +149,7 @@ export function FileNavigation({
                   variant="ghost"
                   style={style}
                   data-tree-path={node.path}
+                  tabIndex={-1}
                   title={node.path}
                   aria-expanded={open}
                   aria-label={`${open ? "Collapse" : "Expand"} folder ${node.path}`}
@@ -176,8 +177,9 @@ export function FileNavigation({
                 style={style}
                 data-path={file.path}
                 data-tree-path={file.path}
+                tabIndex={selected === file.path ? 0 : -1}
                 aria-current={selected === file.path}
-                aria-label={`${file.path}, ${decoration.label}${viewed ? ", reviewed" : ""}`}
+                aria-label={`${file.path}, ${decoration.label}${viewed ? ", reviewed" : ""}${count ? `, ${count} review ${count === 1 ? "comment" : "comments"}` : ""}`}
                 title={`${file.oldPath ? `${file.oldPath} → ${file.path}` : file.path}\n${decoration.details}`}
                 onClick={() => onSelect(file.path)}
                 onKeyDown={onKeyDown}
@@ -187,7 +189,7 @@ export function FileNavigation({
                 {count > 0 && (
                   <span
                     className="file-comment-count"
-                    title={`${count} comments`}
+                    title={`${count} review ${count === 1 ? "comment" : "comments"}`}
                   >
                     <CommentIcon /> {count}
                   </span>

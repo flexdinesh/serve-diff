@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "cn";
 
 const badgeVariants = cva(
-  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-[var(--space-1)] overflow-hidden whitespace-nowrap rounded-[var(--radius-sm)] border border-transparent px-[var(--space-2)] py-0.5 text-[length:var(--text-xs)] font-[var(--weight-medium)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background [&>svg]:pointer-events-none [&>svg:not([class*='size-'])]:size-(--icon-sm)",
+  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-[var(--space-1)] overflow-hidden whitespace-nowrap rounded-[var(--radius-sm)] border border-transparent px-[var(--space-2)] py-0.5 text-[length:var(--text-xs)] font-[var(--weight-medium)] [&>svg]:pointer-events-none [&>svg:not([class*='size-'])]:size-(--icon-sm)",
   {
     variants: {
       variant: {
@@ -12,7 +12,7 @@ const badgeVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
         destructive:
-          "bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
+          "bg-destructive/10 text-destructive dark:bg-destructive/20 [a]:hover:bg-destructive/20",
         outline:
           "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
         ghost:

@@ -137,7 +137,13 @@ export function DiffWorkspace() {
       collapsed,
       setCollapsed,
     },
-    navigation: { files, filter, navigationTarget, commentNavigationTarget },
+    navigation: {
+      files,
+      filter,
+      setFilter,
+      navigationTarget,
+      commentNavigationTarget,
+    },
     reviewed: { isReviewed, toggleReviewed },
     draft,
     review,
@@ -597,16 +603,32 @@ export function DiffWorkspace() {
           />
         </section>
         <div id="empty" role="status" hidden={files.length > 0}>
-          <div className="empty-symbol">±</div>
+          <div className="empty-symbol" aria-hidden="true">
+            {!repository && diff.notice ? "!" : "±"}
+          </div>
           <h2>{emptyTitle}</h2>
           <p>{emptyDescription}</p>
+          {!!filter && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFilter("")}
+            >
+              Clear filter
+            </Button>
+          )}
         </div>
       </div>
       <footer className="main-footer">
         <span id="scope-description">{scopeDescription}</span>
         <span>
-          <kbd>J</kbd> <kbd>K</kbd> files <kbd>/</kbd> filter <kbd>R</kbd>{" "}
-          refresh
+          <kbd>Alt+J</kbd> <kbd>Alt+K</kbd> files <kbd>Alt+/</kbd> filter
+          {!piped && (
+            <>
+              {" "}
+              <kbd>Alt+R</kbd> refresh
+            </>
+          )}
         </span>
       </footer>
     </main>

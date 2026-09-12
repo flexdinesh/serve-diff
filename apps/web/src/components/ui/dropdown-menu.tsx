@@ -2,6 +2,9 @@ import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { CheckIcon } from "lucide-react";
 import { cn } from "cn";
 
+const dropdownMenuItemClassName =
+  "relative flex min-h-[var(--control-height)] cursor-default items-center gap-[var(--space-2)] rounded-[var(--radius-sm)] py-[var(--space-1)] pr-[var(--space-8)] pl-[var(--space-2)] text-[length:var(--text-sm)] outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-60 [&_svg]:pointer-events-none [&_svg]:size-(--icon-base) [&_svg]:shrink-0";
+
 function DropdownMenu(props: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />;
 }
@@ -53,6 +56,16 @@ function DropdownMenuRadioGroup(props: MenuPrimitive.RadioGroup.Props) {
   );
 }
 
+function DropdownMenuItem({ className, ...props }: MenuPrimitive.Item.Props) {
+  return (
+    <MenuPrimitive.Item
+      data-slot="dropdown-menu-item"
+      className={cn(dropdownMenuItemClassName, className)}
+      {...props}
+    />
+  );
+}
+
 function DropdownMenuRadioItem({
   className,
   children,
@@ -61,23 +74,41 @@ function DropdownMenuRadioItem({
   return (
     <MenuPrimitive.RadioItem
       data-slot="dropdown-menu-radio-item"
-      className={cn(
-        "relative flex cursor-default items-center gap-[var(--space-2)] rounded-[var(--radius-sm)] py-[var(--space-1)] pr-8 pl-[var(--space-2)] text-[length:var(--text-sm)] outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-60 [&_svg]:pointer-events-none [&_svg]:size-(--icon-base) [&_svg]:shrink-0",
-        className,
-      )}
+      className={cn(dropdownMenuItemClassName, className)}
       {...props}
     >
       {children}
-      <MenuPrimitive.RadioItemIndicator className="pointer-events-none absolute right-2 flex size-(--icon-base) items-center justify-center">
+      <MenuPrimitive.RadioItemIndicator className="pointer-events-none absolute right-[var(--space-2)] flex size-(--icon-base) items-center justify-center">
         <CheckIcon />
       </MenuPrimitive.RadioItemIndicator>
     </MenuPrimitive.RadioItem>
   );
 }
 
+function DropdownMenuCheckboxItem({
+  className,
+  children,
+  ...props
+}: MenuPrimitive.CheckboxItem.Props) {
+  return (
+    <MenuPrimitive.CheckboxItem
+      data-slot="dropdown-menu-checkbox-item"
+      className={cn(dropdownMenuItemClassName, className)}
+      {...props}
+    >
+      {children}
+      <MenuPrimitive.CheckboxItemIndicator className="pointer-events-none absolute right-[var(--space-2)] flex size-(--icon-base) items-center justify-center">
+        <CheckIcon />
+      </MenuPrimitive.CheckboxItemIndicator>
+    </MenuPrimitive.CheckboxItem>
+  );
+}
+
 export {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,

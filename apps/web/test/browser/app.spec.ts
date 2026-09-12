@@ -461,18 +461,6 @@ test("inline comments use a distinct structured surface while sidebar comments r
   await expect(viewed).toHaveCSS("height", "32px");
   await expect(viewed).toHaveAttribute("data-size", "default");
   await expect(page.locator(".branch-badge")).toHaveCSS("height", "32px");
-  await expect(page.locator(".local-badge")).toHaveCSS("height", "32px");
-  const visibleControlBorders = await Promise.all(
-    [
-      page.locator(".search-box"),
-      page.locator('[data-slot="select-trigger"]').first(),
-      viewed,
-      resolve,
-    ].map((control) =>
-      control.evaluate((element) => getComputedStyle(element).borderColor),
-    ),
-  );
-
   await page.getByRole("tab", { name: /Comments/ }).click();
   const sidebar = page.locator(
     '#comments-panel [data-comment-id="styled-comment"] .comment-card',
@@ -498,7 +486,7 @@ test("inline comments use a distinct structured surface while sidebar comments r
     ),
   ).toEqual(["2", "3", "4"]);
   await expect(sidebar).toHaveAttribute("data-slot", "card");
-  await expect(sidebar).toHaveCSS("border-radius", "8px");
+  await expect(sidebar).toHaveCSS("border-radius", "12px");
   await expect(sidebar).toHaveCSS("border-left-width", "1px");
   await expect(sidebar).toHaveCSS("border-right-width", "1px");
   const [inlineBorder, sidebarBorder] = await Promise.all([
@@ -530,34 +518,25 @@ test("inline comments use a distinct structured surface while sidebar comments r
       Math.min(...sidebarActionMetrics.map(({ top }) => top)),
   ).toBeLessThanOrEqual(1);
 
-  const copyUnresolved = page.locator("#copy-unresolved");
-  await expect(copyUnresolved).toHaveAttribute("data-size", "default");
-  await expect(copyUnresolved).toHaveAttribute("data-variant", "outline");
-  await expect(copyUnresolved).toHaveCSS("height", "32px");
-  await expect(copyUnresolved).toHaveCSS("border-style", "solid");
-  await expect(copyUnresolved).toHaveCSS("border-width", "1px");
+  const copyReview = page.locator("#copy-review");
+  await expect(copyReview).toHaveAttribute("data-size", "default");
+  await expect(copyReview).toHaveAttribute("data-variant", "default");
+  await expect(copyReview).toHaveCSS("height", "32px");
   const [copyBackground, sidebarBackground] = await Promise.all([
-    copyUnresolved.evaluate(
-      (button) => getComputedStyle(button).backgroundColor,
-    ),
+    copyReview.evaluate((button) => getComputedStyle(button).backgroundColor),
     page
       .locator("#sidebar")
       .evaluate((sidebar) => getComputedStyle(sidebar).backgroundColor),
   ]);
   expect(copyBackground).not.toBe(sidebarBackground);
-  const copyRestingBackground = await copyUnresolved.evaluate(
+  const copyRestingBackground = await copyReview.evaluate(
     (button) => getComputedStyle(button).backgroundColor,
   );
-  await copyUnresolved.hover();
-  const copyHoverBackground = await copyUnresolved.evaluate(
+  await copyReview.hover();
+  const copyHoverBackground = await copyReview.evaluate(
     (button) => getComputedStyle(button).backgroundColor,
   );
   expect(copyHoverBackground).not.toBe(copyRestingBackground);
-  expect(copyHoverBackground).toBe(outlineHoverBackground);
-  const copyBorder = await copyUnresolved.evaluate(
-    (element) => getComputedStyle(element).borderColor,
-  );
-  expect(new Set([...visibleControlBorders, copyBorder]).size).toBe(1);
 });
 
 test("theme picker follows system and persists explicit choices", async ({
@@ -618,13 +597,15 @@ test("display controls expose state and persist preferences", async ({
   await expect(page.locator("#file-panel")).toBeHidden();
   await page.getByRole("tab", { name: /Changes/ }).click();
 
-  const wrap = page.getByRole("button", { name: "Wrap", exact: true });
-  await expect(wrap).toHaveAttribute("aria-pressed", "false");
+  const viewOptions = page.getByRole("button", { name: "View options" });
+  await viewOptions.click();
+  const wrap = page.getByRole("menuitemcheckbox", { name: "Wrap lines" });
+  await expect(wrap).toHaveAttribute("aria-checked", "false");
   await wrap.click();
-  await expect(wrap).toHaveAttribute("aria-pressed", "true");
   await expect
     .poll(() => page.evaluate(() => localStorage.getItem("wrap")))
     .toBe("true");
+  await page.keyboard.press("Escape");
 
   const unified = page.getByRole("button", {
     name: "Unified",
@@ -636,18 +617,15 @@ test("display controls expose state and persist preferences", async ({
     .poll(() => page.evaluate(() => localStorage.getItem("layout")))
     .toBe("unified");
 
-  const inline = page.getByRole("combobox", { name: "Inline change detail" });
-  await inline.click();
-  await page.getByRole("option", { name: "Characters" }).click();
-  await expect(inline).toContainText("Characters");
+  await viewOptions.click();
+  await page.getByRole("menuitemradio", { name: "Characters" }).click();
   await expect
     .poll(() => page.evaluate(() => localStorage.getItem("line-diff-type")))
     .toBe("char");
+  await page.keyboard.press("Escape");
 
-  const codeTheme = page.getByRole("combobox", { name: "Code theme" });
-  await codeTheme.click();
-  await page.getByRole("option", { name: "GitHub" }).click();
-  await expect(codeTheme).toContainText("GitHub");
+  await viewOptions.click();
+  await page.getByRole("menuitemradio", { name: "GitHub" }).click();
   await expect
     .poll(() => page.evaluate(() => localStorage.getItem("diff-theme")))
     .toBe("github");
@@ -766,14 +744,8 @@ test("fallback copy dialog traps and restores focus", async ({ page }) => {
   });
   await page.reload();
 
-  const treeCommentCount = page.locator(".file-comment-count");
-  await expect(treeCommentCount).toHaveText("1");
-  await expect(treeCommentCount).toHaveCSS("flex-direction", "row");
-  await expect(treeCommentCount.locator("svg")).toHaveCSS("width", "14px");
-  const treeCommentBox = await treeCommentCount.boundingBox();
-  expect(treeCommentBox?.height ?? 0).toBeLessThanOrEqual(20);
-
   await page.getByRole("tab", { name: /Comments/ }).click();
+  await page.getByRole("button", { name: "All", exact: true }).click();
   await page.getByText(/Earlier review 1/).click();
   const resolve = page.getByRole("button", { name: "Resolve", exact: true });
   await resolve.click();
@@ -782,7 +754,7 @@ test("fallback copy dialog traps and restores focus", async ({ page }) => {
   );
   await expect(card).toHaveAttribute("data-expanded", "false");
   await expect(card.locator(".comment-collapse-panel")).toBeHidden();
-  await expect(page.getByText("Resolved", { exact: true })).toBeVisible();
+  await expect(card.getByText("Resolved", { exact: true })).toBeVisible();
   const expand = card.locator(".comment-collapse");
   await expect(expand).toHaveAttribute("aria-expanded", "false");
   await expand.click();
@@ -793,8 +765,9 @@ test("fallback copy dialog traps and restores focus", async ({ page }) => {
   await expect(resolve).toBeVisible();
   await expect(card).toHaveAttribute("data-expanded", "true");
 
-  const copy = page.getByRole("button", { name: "Copy all rounds" });
-  await copy.click();
+  const copyOptions = page.getByRole("button", { name: "Copy options" });
+  await copyOptions.click();
+  await page.getByRole("menuitem", { name: "All rounds" }).click();
   const dialog = page.getByRole("dialog", { name: "Copy review comments" });
   await expect(dialog).toBeVisible();
   const output = page.getByRole("textbox", { name: "Comments XML" });
@@ -812,7 +785,7 @@ test("fallback copy dialog traps and restores focus", async ({ page }) => {
     .toBe(true);
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
-  await expect(copy).toBeFocused();
+  await expect(copyOptions).toBeFocused();
 });
 
 test("mobile sidebar preserves accessible touch targets", async ({ page }) => {

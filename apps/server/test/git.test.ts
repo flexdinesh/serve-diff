@@ -277,8 +277,8 @@ test("serves browser assets and validates API paths, versions, modes, hosts, ori
   assert.equal((await fetch(server.url)).status, 200);
   assert.match(await (await fetch(server.url)).text(), /serve-diff/);
   assert.equal(
-    (await fetch(`${server.url}/favicon.svg`)).headers.get("content-type"),
-    "image/svg+xml",
+    (await fetch(`${server.url}/logo.png`)).headers.get("content-type"),
+    "image/png",
   );
   assert.equal((await fetch(`${server.url}/api/diff`)).status, 200);
   assert.match(await (await fetch(fileURL)).text(), /export const hello/);

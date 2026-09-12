@@ -1,13 +1,15 @@
 import { isDiffMode } from "@serve-diff/shared";
+import { Settings2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Toggle } from "@/components/ui/toggle";
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useAppState } from "./app-state.tsx";
 import {
@@ -63,78 +65,8 @@ export function DiffToolbar() {
         ))}
       </ToggleGroup>
       <div className="toolbar-spacer" />
-      <Button
-        type="button"
-        id="collapse-all"
-        variant="ghost"
-        title="Collapse or expand all files"
-        onClick={() =>
-          setCollapsed(
-            allCollapsed ? new Set() : new Set(files.map((file) => file.path)),
-          )
-        }
-      >
-        {allCollapsed ? "Expand all" : "Collapse all"}
-      </Button>
-      <Toggle
-        id="wrap"
-        pressed={wrap}
-        title="Wrap long lines"
-        onPressedChange={setWrap}
-      >
-        Wrap
-      </Toggle>
-      <div
-        className="toolbar-select"
-        title="Highlight changed text within paired modified lines"
-      >
-        <span id="inline-label">Inline</span>
-        <Select
-          value={lineDiffType}
-          onValueChange={(value) => {
-            if (value !== null) setLineDiffType(readLineDiffType(value));
-          }}
-        >
-          <SelectTrigger aria-label="Inline change detail">
-            <SelectValue>
-              {LINE_DIFF_TYPES.find((option) => option.value === lineDiffType)
-                ?.label ?? lineDiffType}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {LINE_DIFF_TYPES.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="toolbar-select">
-        <span id="theme-label">Code theme</span>
-        <Select
-          value={diffTheme}
-          onValueChange={(value) => {
-            if (value !== null) setDiffTheme(readDiffTheme(value));
-          }}
-        >
-          <SelectTrigger aria-label="Code theme">
-            <SelectValue>
-              {DIFF_THEMES.find((option) => option.value === diffTheme)
-                ?.label ?? diffTheme}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {DIFF_THEMES.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
       <ToggleGroup
-        className="segmented"
+        className="segmented layout-control"
         aria-label="Diff layout"
         spacing={0}
         variant="default"
@@ -152,6 +84,78 @@ export function DiffToolbar() {
           Unified
         </ToggleGroupItem>
       </ToggleGroup>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              type="button"
+              id="view-options"
+              variant="outline"
+              aria-label="View options"
+            />
+          }
+        >
+          <Settings2Icon aria-hidden="true" />
+          <span className="view-options-label">View options</span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="view-options-menu"
+          aria-label="View options"
+        >
+          <DropdownMenuCheckboxItem checked={wrap} onCheckedChange={setWrap}>
+            Wrap lines
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuItem
+            onClick={() =>
+              setCollapsed(
+                allCollapsed
+                  ? new Set()
+                  : new Set(files.map((file) => file.path)),
+              )
+            }
+          >
+            {allCollapsed ? "Expand all files" : "Collapse all files"}
+          </DropdownMenuItem>
+          <div className="dropdown-menu-label">Layout</div>
+          <DropdownMenuRadioGroup
+            aria-label="Diff layout"
+            value={layout}
+            onValueChange={(value) => {
+              if (value === "split" || value === "unified") setLayout(value);
+            }}
+          >
+            <DropdownMenuRadioItem value="split">Split</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="unified">
+              Unified
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+          <div className="dropdown-menu-label">Inline changes</div>
+          <DropdownMenuRadioGroup
+            aria-label="Inline change detail"
+            value={lineDiffType}
+            onValueChange={(value) => setLineDiffType(readLineDiffType(value))}
+          >
+            {LINE_DIFF_TYPES.map((option) => (
+              <DropdownMenuRadioItem key={option.value} value={option.value}>
+                {option.label}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+          <div className="dropdown-menu-label">Code theme</div>
+          <DropdownMenuRadioGroup
+            aria-label="Code theme"
+            value={diffTheme}
+            onValueChange={(value) => setDiffTheme(readDiffTheme(value))}
+          >
+            {DIFF_THEMES.map((option) => (
+              <DropdownMenuRadioItem key={option.value} value={option.value}>
+                {option.label}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
